@@ -20,6 +20,7 @@ const Index = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [activeStatus, setActiveStatus] = useState('all');
   
   const isMobile = useMediaQuery("(max-width: 768px)");
   
@@ -29,16 +30,21 @@ const Index = () => {
     setRecords(allRecords);
     
     // Apply any existing filters
-    applyFilters(allRecords, searchQuery, activeFilter);
+    applyFilters(allRecords, searchQuery, activeFilter, activeStatus);
   };
   
   // Apply both search and type filters
-  const applyFilters = (recordsToFilter: MaintenanceRecord[], query: string, filter: string) => {
+  const applyFilters = (recordsToFilter: MaintenanceRecord[], query: string, filter: string, status: string) => {
     let result = [...recordsToFilter];
     
     // Apply equipment type filter
     if (filter !== 'all') {
       result = result.filter(record => record.equipmentType === filter);
+    }
+    
+    // Apply status filter
+    if (status !== 'all') {
+      result = result.filter(record => record.status === status);
     }
     
     // Apply search query if present
@@ -58,13 +64,19 @@ const Index = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-    applyFilters(records, query, activeFilter);
+    applyFilters(records, query, activeFilter, activeStatus);
   };
   
   // Handle filter change
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
-    applyFilters(records, searchQuery, filter);
+    applyFilters(records, searchQuery, filter, activeStatus);
+  };
+  
+  // Handle status filter change
+  const handleStatusChange = (status: string) => {
+    setActiveStatus(status);
+    applyFilters(records, searchQuery, activeFilter, status);
   };
   
   // Initialize on component mount
@@ -138,13 +150,13 @@ const Index = () => {
           </div>
           
           <div className="bg-white rounded-lg shadow-sm border">
-            <Tabs defaultValue="all" className="w-full">
+            <Tabs defaultValue="all" className="w-full" onValueChange={handleStatusChange}>
               <div className="px-4 pt-4">
                 <TabsList className="grid grid-cols-4 w-full">
-                  <TabsTrigger value="all" onClick={() => handleFilterChange('all')}>Todos</TabsTrigger>
-                  <TabsTrigger value="received" onClick={() => handleFilterChange('received')}>Recebidos</TabsTrigger>
-                  <TabsTrigger value="sent" onClick={() => handleFilterChange('sent')}>Em Manutenção</TabsTrigger>
-                  <TabsTrigger value="completed" onClick={() => handleFilterChange('completed')}>Concluídos</TabsTrigger>
+                  <TabsTrigger value="all">Todos</TabsTrigger>
+                  <TabsTrigger value="received">Recebidos</TabsTrigger>
+                  <TabsTrigger value="sent">Em Manutenção</TabsTrigger>
+                  <TabsTrigger value="completed">Concluídos</TabsTrigger>
                 </TabsList>
               </div>
               
@@ -178,24 +190,19 @@ const Index = () => {
               
               <TabsContent value="received" className="p-4">
                 {view === 'list' && !isMobile ? (
-                  <MaintenanceTable 
-                    records={filteredRecords.filter(r => r.status === 'received')} 
-                    onUpdate={loadRecords} 
-                  />
+                  <MaintenanceTable records={filteredRecords} onUpdate={loadRecords} />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRecords.filter(r => r.status === 'received').length === 0 ? (
+                    {filteredRecords.length === 0 ? (
                       <div className="col-span-full flex items-center justify-center py-10 text-center">
                         <div className="max-w-sm">
                           <p className="text-gray-500">Nenhum equipamento com status "Recebido".</p>
                         </div>
                       </div>
                     ) : (
-                      filteredRecords
-                        .filter(r => r.status === 'received')
-                        .map(record => (
-                          <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
-                        ))
+                      filteredRecords.map(record => (
+                        <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
+                      ))
                     )}
                   </div>
                 )}
@@ -203,24 +210,19 @@ const Index = () => {
               
               <TabsContent value="sent" className="p-4">
                 {view === 'list' && !isMobile ? (
-                  <MaintenanceTable 
-                    records={filteredRecords.filter(r => r.status === 'sent')} 
-                    onUpdate={loadRecords} 
-                  />
+                  <MaintenanceTable records={filteredRecords} onUpdate={loadRecords} />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRecords.filter(r => r.status === 'sent').length === 0 ? (
+                    {filteredRecords.length === 0 ? (
                       <div className="col-span-full flex items-center justify-center py-10 text-center">
                         <div className="max-w-sm">
                           <p className="text-gray-500">Nenhum equipamento com status "Em Manutenção".</p>
                         </div>
                       </div>
                     ) : (
-                      filteredRecords
-                        .filter(r => r.status === 'sent')
-                        .map(record => (
-                          <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
-                        ))
+                      filteredRecords.map(record => (
+                        <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
+                      ))
                     )}
                   </div>
                 )}
@@ -228,24 +230,19 @@ const Index = () => {
               
               <TabsContent value="completed" className="p-4">
                 {view === 'list' && !isMobile ? (
-                  <MaintenanceTable 
-                    records={filteredRecords.filter(r => r.status === 'completed')} 
-                    onUpdate={loadRecords} 
-                  />
+                  <MaintenanceTable records={filteredRecords} onUpdate={loadRecords} />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRecords.filter(r => r.status === 'completed').length === 0 ? (
+                    {filteredRecords.length === 0 ? (
                       <div className="col-span-full flex items-center justify-center py-10 text-center">
                         <div className="max-w-sm">
                           <p className="text-gray-500">Nenhum equipamento com status "Concluído".</p>
                         </div>
                       </div>
                     ) : (
-                      filteredRecords
-                        .filter(r => r.status === 'completed')
-                        .map(record => (
-                          <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
-                        ))
+                      filteredRecords.map(record => (
+                        <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
+                      ))
                     )}
                   </div>
                 )}
