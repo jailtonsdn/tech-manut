@@ -29,9 +29,13 @@ const Index = () => {
     loadRecords();
   }, []);
 
-  const loadRecords = () => {
-    const allRecords = getMaintenanceRecords();
-    setRecords(allRecords);
+  const loadRecords = async () => {
+    try {
+      const allRecords = await getMaintenanceRecords();
+      setRecords(allRecords);
+    } catch (error) {
+      console.error("Erro ao carregar registros:", error);
+    }
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,8 +61,8 @@ const Index = () => {
   const filteredRecords = records.filter(record => {
     // Filtro por texto de busca
     const matchesSearch = 
-      record.equipmentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.assetTag.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.equipmentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.assetTag?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (record.notes && record.notes.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (record.branch && record.branch.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (record.department && record.department.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -79,7 +83,7 @@ const Index = () => {
   });
 
   // Opções únicas para os filtros
-  const typeOptions = [...new Set(records.map(r => r.equipmentType))];
+  const typeOptions = [...new Set(records.map(r => r.equipmentType).filter(Boolean))];
   const branchOptions = [...new Set(records.filter(r => r.branch).map(r => r.branch as string))];
   const departmentOptions = [...new Set(records.filter(r => r.department).map(r => r.department as string))];
 

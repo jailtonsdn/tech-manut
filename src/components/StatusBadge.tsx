@@ -3,7 +3,7 @@ import { MaintenanceStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface StatusBadgeProps {
-  status: MaintenanceStatus;
+  status: MaintenanceStatus | string;
   className?: string;
 }
 

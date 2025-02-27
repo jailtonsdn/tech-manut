@@ -26,7 +26,7 @@ function mapToFrontendFields(record: MaintenanceRecord): MaintenanceRecord {
     dateSentToService: record.data_entrega,
     dateReturned: record.data_devolucao,
     notes: record.observacao,
-    status: statusMapped as string, // Aqui garantimos que o status está no formato correto
+    status: statusMapped, // Aqui garantimos que o status está no formato correto
     // Definir equipmentType com base em alguma lógica ou campo padrão
     equipmentType: 'computer', // Valor padrão, ajuste conforme necessário
   };

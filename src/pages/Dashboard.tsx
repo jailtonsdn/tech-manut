@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format, isWithinInterval, parse, addMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,17 +16,33 @@ const Dashboard = () => {
   const [endDate, setEndDate] = useState<string>(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
   const [filterBranch, setFilterBranch] = useState<string>('');
   const [filterDepartment, setFilterDepartment] = useState<string>('');
+  const [allRecords, setAllRecords] = useState<MaintenanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Cores para o gráfico de pizza
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
-  // Obtém todos os registros
-  const allRecords = getMaintenanceRecords();
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const records = await getMaintenanceRecords();
+        setAllRecords(records);
+      } catch (error) {
+        console.error("Erro ao carregar registros:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
   
   // Filtra registros concluídos com valor
-  const completedRecords = allRecords.filter(
-    record => record.status === 'completed' && record.value !== undefined
-  );
+  const completedRecords = useMemo(() => {
+    return allRecords.filter(
+      record => record.status === 'completed' && record.value !== undefined
+    );
+  }, [allRecords]);
 
   // Opções para os filtros
   const branchOptions = useMemo(() => {
@@ -106,7 +122,7 @@ const Dashboard = () => {
     const costs: Record<string, number> = {};
     
     filteredRecords.forEach(record => {
-      const type = record.equipmentType;
+      const type = record.equipmentType || 'unknown';
       costs[type] = (costs[type] || 0) + (record.value || 0);
     });
     
