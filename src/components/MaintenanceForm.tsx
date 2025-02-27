@@ -25,7 +25,7 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
       equipmentName: '',
       assetTag: '',
       dateReceived: format(new Date(), 'yyyy-MM-dd'),
-      status: 'received', // Sempre começa como "Sala da TI"
+      status: 'received', // Sempre começa como "Lançado"
       equipmentType: 'computer',
       branch: '',
       department: ''
@@ -61,10 +61,11 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
           description: "As informações foram atualizadas com sucesso.",
         });
       } else {
-        // Garante que novos registros sempre comecem com status "received"
+        // Garante que novos registros sempre comecem com status "received" e data atual
         addMaintenanceRecord({
           ...formData as Omit<MaintenanceRecord, 'id'>,
-          status: 'received'
+          status: 'received',
+          dateReceived: format(new Date(), 'yyyy-MM-dd')
         });
         toast({
           title: "Equipamento registrado",
@@ -167,18 +168,6 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
                   <SelectItem value="computer">Computador</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dateReceived">Data de Recebimento</Label>
-              <Input
-                id="dateReceived"
-                name="dateReceived"
-                type="date"
-                value={formData.dateReceived}
-                onChange={handleInputChange}
-                required
-              />
             </div>
           </div>
           

@@ -277,94 +277,102 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
         
         <div className="flex gap-2">
           {record.status === 'received' && (
-            <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700">
-                  <Truck className="h-3.5 w-3.5 mr-1" />
-                  Em Manutenção
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <h3 className="text-lg font-medium mb-4">Enviar para Manutenção</h3>
-                <form onSubmit={(e) => { e.preventDefault(); handleSendToService(); }}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="dateSent">Data de Envio</Label>
-                      <Input
-                        id="dateSent"
-                        type="date"
-                        value={dateSent}
-                        onChange={(e) => setDateSent(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" type="button" onClick={() => setShowSendDialog(false)}>
-                        Cancelar
-                      </Button>
-                      <Button type="submit">Confirmar</Button>
-                    </div>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700"
+              onClick={() => setShowSendDialog(true)}
+            >
+              <Truck className="h-3.5 w-3.5 mr-1" />
+              Entregue
+            </Button>
           )}
           
           {record.status === 'sent' && (
-            <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="text-xs bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700">
-                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                  Concluído
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <h3 className="text-lg font-medium mb-4">Concluir Manutenção</h3>
-                <form onSubmit={(e) => { e.preventDefault(); handleCompleteService(); }}>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="dateReturned">Data de Retorno</Label>
-                      <Input
-                        id="dateReturned"
-                        type="date"
-                        value={dateReturned}
-                        onChange={(e) => setDateReturned(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="invoiceNumber">Número NFE</Label>
-                      <Input
-                        id="invoiceNumber"
-                        placeholder="Ex: NFE-5678"
-                        value={invoiceNumber}
-                        onChange={(e) => setInvoiceNumber(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="value">Valor (R$)</Label>
-                      <Input
-                        id="value"
-                        type="number"
-                        step="0.01"
-                        placeholder="0,00"
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <Button variant="outline" type="button" onClick={() => setShowCompleteDialog(false)}>
-                        Cancelar
-                      </Button>
-                      <Button type="submit">Confirmar</Button>
-                    </div>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-xs bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700"
+              onClick={() => setShowCompleteDialog(true)}
+            >
+              <CheckCircle className="h-3.5 w-3.5 mr-1" />
+              Devolvido
+            </Button>
           )}
+          
+          <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+            <DialogContent>
+              <h3 className="text-lg font-medium mb-4">Entregue para Manutenção</h3>
+              <form onSubmit={(e) => { e.preventDefault(); handleSendToService(); }}>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dateSent">Data de Entrega</Label>
+                    <Input
+                      id="dateSent"
+                      type="date"
+                      value={dateSent}
+                      onChange={(e) => setDateSent(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" type="button" onClick={() => setShowSendDialog(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit">Confirmar</Button>
+                  </div>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+            <DialogContent>
+              <h3 className="text-lg font-medium mb-4">Devolvido da Manutenção</h3>
+              <form onSubmit={(e) => { e.preventDefault(); handleCompleteService(); }}>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="dateReturned">Data de Devolução</Label>
+                    <Input
+                      id="dateReturned"
+                      type="date"
+                      value={dateReturned}
+                      onChange={(e) => setDateReturned(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="invoiceNumber">Número NFE</Label>
+                    <Input
+                      id="invoiceNumber"
+                      placeholder="Ex: NFE-5678"
+                      value={invoiceNumber}
+                      onChange={(e) => setInvoiceNumber(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="value">Valor (R$)</Label>
+                    <Input
+                      id="value"
+                      type="number"
+                      step="0.01"
+                      placeholder="0,00"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" type="button" onClick={() => setShowCompleteDialog(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="submit">Confirmar</Button>
+                  </div>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
           
           <AlertDialog>
             <AlertDialogTrigger asChild>
