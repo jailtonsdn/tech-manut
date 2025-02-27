@@ -5,7 +5,12 @@ import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Menu, X, BarChart2, LogOut } from "lucide-react";
 
-const Navbar = () => {
+interface NavbarProps {
+  activeFilter?: string;
+  onFilterChange?: (filter: string) => void;
+}
+
+const Navbar = ({ activeFilter = 'all', onFilterChange }: NavbarProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -13,6 +18,12 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleFilterClick = (filter: string) => {
+    if (onFilterChange) {
+      onFilterChange(filter);
+    }
   };
 
   return (
