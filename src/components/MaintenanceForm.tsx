@@ -25,7 +25,7 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
       equipmentName: '',
       assetTag: '',
       dateReceived: format(new Date(), 'yyyy-MM-dd'),
-      status: 'received',
+      status: 'received', // Sempre começa como "Sala da TI"
       equipmentType: 'computer',
       branch: '',
       department: ''
@@ -61,7 +61,11 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
           description: "As informações foram atualizadas com sucesso.",
         });
       } else {
-        addMaintenanceRecord(formData as Omit<MaintenanceRecord, 'id'>);
+        // Garante que novos registros sempre comecem com status "received"
+        addMaintenanceRecord({
+          ...formData as Omit<MaintenanceRecord, 'id'>,
+          status: 'received'
+        });
         toast({
           title: "Equipamento registrado",
           description: "O equipamento foi adicionado ao sistema.",
@@ -132,6 +136,7 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
                 placeholder="Ex: Matriz, Filial 1, etc"
                 value={formData.branch || ''}
                 onChange={handleInputChange}
+                required
               />
             </div>
             
@@ -143,6 +148,7 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
                 placeholder="Ex: Financeiro, RH, etc"
                 value={formData.department || ''}
                 onChange={handleInputChange}
+                required
               />
             </div>
             
@@ -164,23 +170,6 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange('status', value as any)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="received">Sala da TI</SelectItem>
-                  <SelectItem value="sent">Em Manutenção</SelectItem>
-                  <SelectItem value="completed">Concluído</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
               <Label htmlFor="dateReceived">Data de Recebimento</Label>
               <Input
                 id="dateReceived"
@@ -189,52 +178,6 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
                 value={formData.dateReceived}
                 onChange={handleInputChange}
                 required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="dateSentToService">Data de Envio para Manutenção</Label>
-              <Input
-                id="dateSentToService"
-                name="dateSentToService"
-                type="date"
-                value={formData.dateSentToService || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="dateReturned">Data de Retorno</Label>
-              <Input
-                id="dateReturned"
-                name="dateReturned"
-                type="date"
-                value={formData.dateReturned || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="invoiceNumber">Número NFE</Label>
-              <Input
-                id="invoiceNumber"
-                name="invoiceNumber"
-                placeholder="Ex: NFE-5678"
-                value={formData.invoiceNumber || ''}
-                onChange={handleInputChange}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="value">Valor (R$)</Label>
-              <Input
-                id="value"
-                name="value"
-                type="number"
-                placeholder="0,00"
-                step="0.01"
-                value={formData.value || ''}
-                onChange={handleInputChange}
               />
             </div>
           </div>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { MaintenanceRecord } from '@/types';
@@ -39,6 +38,15 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
   };
   
   const handleSendToService = () => {
+    if (!dateSent) {
+      toast({
+        title: "Data obrigatória",
+        description: "Por favor, informe a data de envio.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     updateMaintenanceRecord({
       ...record,
       status: 'sent',
@@ -53,6 +61,15 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
   };
   
   const handleCompleteService = () => {
+    if (!dateReturned) {
+      toast({
+        title: "Data obrigatória",
+        description: "Por favor, informe a data de retorno.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     updateMaintenanceRecord({
       ...record,
       status: 'completed',
@@ -170,90 +187,11 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
             </DialogContent>
           </Dialog>
           
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="text-xs">
-                <Info className="h-3.5 w-3.5 mr-1" />
-                Detalhes
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Detalhes do Equipamento</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Nome</p>
-                    <p className="font-medium">{record.equipmentName}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Patrimônio</p>
-                    <p className="font-medium">{record.assetTag}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Tipo</p>
-                    <p className="font-medium">{getEquipmentTypeLabel(record.equipmentType)}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Status</p>
-                    <StatusBadge status={record.status} />
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Recebido em</p>
-                    <p className="font-medium">{format(new Date(record.dateReceived), 'dd/MM/yyyy')}</p>
-                  </div>
-                  
-                  {record.branch && (
-                    <div>
-                      <p className="text-gray-500">Filial</p>
-                      <p className="font-medium">{record.branch}</p>
-                    </div>
-                  )}
-                  
-                  {record.department && (
-                    <div>
-                      <p className="text-gray-500">Setor</p>
-                      <p className="font-medium">{record.department}</p>
-                    </div>
-                  )}
-                  
-                  {record.dateSentToService && (
-                    <div>
-                      <p className="text-gray-500">Enviado para manutenção em</p>
-                      <p className="font-medium">{format(new Date(record.dateSentToService), 'dd/MM/yyyy')}</p>
-                    </div>
-                  )}
-                  
-                  {record.dateReturned && (
-                    <div>
-                      <p className="text-gray-500">Retornado em</p>
-                      <p className="font-medium">{format(new Date(record.dateReturned), 'dd/MM/yyyy')}</p>
-                    </div>
-                  )}
-                  
-                  {record.invoiceNumber && (
-                    <div>
-                      <p className="text-gray-500">Número NFE</p>
-                      <p className="font-medium">{record.invoiceNumber}</p>
-                    </div>
-                  )}
-                  
-                  {record.value !== undefined && (
-                    <div>
-                      <p className="text-gray-500">Valor</p>
-                      <p className="font-medium">{formatCurrency(record.value)}</p>
-                    </div>
-                  )}
-                </div>
-                
-                {record.notes && (
-                  <div>
-                    <p className="text-gray-500">Observações</p>
-                    <p className="mt-1">{record.notes}</p>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" size="sm" className="text-xs"
+            onClick={() => document.getElementById(`details-${record.id}`)?.showModal()}>
+            <Info className="h-3.5 w-3.5 mr-1" />
+            Detalhes
+          </Button>
         </div>
         
         <div className="flex gap-2">
@@ -320,6 +258,7 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
                         placeholder="Ex: NFE-5678"
                         value={invoiceNumber}
                         onChange={(e) => setInvoiceNumber(e.target.value)}
+                        required
                       />
                     </div>
                     <div className="space-y-2">
@@ -331,6 +270,7 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
                         placeholder="0,00"
                         value={value}
                         onChange={(e) => setValue(e.target.value)}
+                        required
                       />
                     </div>
                     <div className="flex justify-end space-x-2">
