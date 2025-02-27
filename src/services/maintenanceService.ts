@@ -16,9 +16,22 @@ function mapToFrontendFields(record: any): MaintenanceRecord {
   }
 
   return {
-    ...record,
     id: record.id || 0,
-    // Mapeia campos do banco para nomes amigáveis no frontend
+    // Campos originais do banco
+    nome_equipamento: record.nome_equipamento || '',
+    placa_patrimonio: record.placa_patrimonio || '',
+    filial: record.filial || 0,
+    setor: record.setor || '',
+    destino: record.destino || '',
+    data_abertura: record.data_abertura || '',
+    data_entrega: record.data_entrega || '',
+    data_devolucao: record.data_devolucao || '',
+    status: record.status || 'received',
+    observacao: record.observacao || '',
+    imagem: record.imagem || '',
+    excluido: record.excluido || 'N',
+    
+    // Mapeamento para campos amigáveis
     equipmentName: record.nome_equipamento || '',
     assetTag: record.placa_patrimonio || '',
     branch: record.filial ? record.filial.toString() : '',
@@ -27,9 +40,7 @@ function mapToFrontendFields(record: any): MaintenanceRecord {
     dateSentToService: record.data_entrega || '',
     dateReturned: record.data_devolucao || '',
     notes: record.observacao || '',
-    status: statusMapped, // Aqui garantimos que o status está no formato correto
-    // Definir equipmentType com base em alguma lógica ou campo padrão
-    equipmentType: 'computer', // Valor padrão, ajuste conforme necessário
+    equipmentType: record.equipmentType || 'computer' // Valor padrão
   };
 }
 
@@ -58,11 +69,14 @@ const mapRecordFromAPI = (record: any): MaintenanceRecord => {
   if (!record) {
     return {
       id: 0,
+      nome_equipamento: '',
+      placa_patrimonio: '',
+      filial: 0,
+      data_abertura: '',
+      status: 'received',
       equipmentName: '',
       assetTag: '',
       branch: '',
-      department: '',
-      status: 'received',
       dateReceived: '',
       equipmentType: 'computer'
     };
