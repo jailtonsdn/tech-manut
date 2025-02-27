@@ -19,7 +19,7 @@ export interface MaintenanceRecord {
   data_abertura?: string;
   data_entrega?: string;
   data_devolucao?: string;
-  status: string;
+  status: MaintenanceStatus | string;
   observacao?: string;
   imagem?: string;
   excluido?: string;

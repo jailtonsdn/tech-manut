@@ -5,6 +5,13 @@ import { MaintenanceRecord, MaintenanceStatus } from '@/types';
 // Quando estiver em desenvolvimento, continua usando o localStorage
 const isDev = process.env.NODE_ENV === 'development';
 
+// Função para validar se uma string é uma data válida
+const isValidDate = (dateString: string | undefined): boolean => {
+  if (!dateString) return false;
+  const date = new Date(dateString);
+  return !isNaN(date.getTime());
+};
+
 // Funções de mapeamento entre os campos do MySQL e os campos do frontend
 function mapToFrontendFields(record: any): MaintenanceRecord {
   // Mapear o status do banco para o formato de MaintenanceStatus
@@ -15,6 +22,11 @@ function mapToFrontendFields(record: any): MaintenanceRecord {
     statusMapped = 'completed';
   }
 
+  // Garantir que as datas sejam válidas
+  const dateReceived = isValidDate(record.data_abertura) ? record.data_abertura : '';
+  const dateSentToService = isValidDate(record.data_entrega) ? record.data_entrega : '';
+  const dateReturned = isValidDate(record.data_devolucao) ? record.data_devolucao : '';
+
   return {
     id: record.id || 0,
     // Campos originais do banco
@@ -23,10 +35,10 @@ function mapToFrontendFields(record: any): MaintenanceRecord {
     filial: record.filial || 0,
     setor: record.setor || '',
     destino: record.destino || '',
-    data_abertura: record.data_abertura || '',
-    data_entrega: record.data_entrega || '',
-    data_devolucao: record.data_devolucao || '',
-    status: record.status || 'received',
+    data_abertura: dateReceived,
+    data_entrega: dateSentToService,
+    data_devolucao: dateReturned,
+    status: statusMapped,
     observacao: record.observacao || '',
     imagem: record.imagem || '',
     excluido: record.excluido || 'N',
@@ -36,9 +48,9 @@ function mapToFrontendFields(record: any): MaintenanceRecord {
     assetTag: record.placa_patrimonio || '',
     branch: record.filial ? record.filial.toString() : '',
     department: record.setor || '',
-    dateReceived: record.data_abertura || '',
-    dateSentToService: record.data_entrega || '',
-    dateReturned: record.data_devolucao || '',
+    dateReceived: dateReceived,
+    dateSentToService: dateSentToService,
+    dateReturned: dateReturned,
     notes: record.observacao || '',
     equipmentType: record.equipmentType || 'computer' // Valor padrão
   };
