@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StatusBadge from './StatusBadge';
 import MaintenanceForm from './MaintenanceForm';
-import { Pencil, Trash2, Info, Truck, CheckCircle } from 'lucide-react';
+import { Pencil, Trash2, Info, Truck, CheckCircle, User } from 'lucide-react';
 import { deleteMaintenanceRecord, updateMaintenanceRecord } from '@/data/maintenanceData';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
@@ -139,6 +139,16 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
             </div>
           )}
           
+          {record.registeredBy && (
+            <div>
+              <p className="text-gray-500">Registrado por</p>
+              <p className="flex items-center">
+                <User className="h-3 w-3 mr-1 text-gray-400" />
+                {record.registeredBy}
+              </p>
+            </div>
+          )}
+          
           {record.dateSentToService && (
             <div>
               <p className="text-gray-500">Enviado em</p>
@@ -220,6 +230,13 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
                     <p className="text-gray-500">Recebido em</p>
                     <p className="font-medium">{format(new Date(record.dateReceived), 'dd/MM/yyyy')}</p>
                   </div>
+                  
+                  {record.registeredBy && (
+                    <div>
+                      <p className="text-gray-500">Registrado por</p>
+                      <p className="font-medium">{record.registeredBy}</p>
+                    </div>
+                  )}
                   
                   {record.branch && (
                     <div>

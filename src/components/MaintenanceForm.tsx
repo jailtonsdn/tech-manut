@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface MaintenanceFormProps {
   existingRecord?: MaintenanceRecord;
@@ -18,6 +19,7 @@ interface MaintenanceFormProps {
 
 const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const isEditing = !!existingRecord;
   
   const [formData, setFormData] = useState<Partial<MaintenanceRecord>>(
@@ -62,10 +64,12 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
         });
       } else {
         // Garante que novos registros sempre comecem com status "received" e data atual
+        // e inclui o nome do usuário que registrou
         addMaintenanceRecord({
           ...formData as Omit<MaintenanceRecord, 'id'>,
           status: 'received',
-          dateReceived: format(new Date(), 'yyyy-MM-dd')
+          dateReceived: format(new Date(), 'yyyy-MM-dd'),
+          registeredBy: user?.name
         });
         toast({
           title: "Equipamento registrado",
@@ -169,6 +173,16 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Exibe quem registrou (apenas na edição) */}
+            {isEditing && formData.registeredBy && (
+              <div className="space-y-2">
+                <Label>Registrado por</Label>
+                <div className="h-10 px-3 py-2 rounded-md border bg-gray-50">
+                  {formData.registeredBy}
+                </div>
+              </div>
+            )}
             
             {/* Só mostra campos de status "sent" e "completed" na edição */}
             {isEditing && (

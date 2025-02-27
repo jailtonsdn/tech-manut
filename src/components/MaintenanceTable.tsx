@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StatusBadge from './StatusBadge';
 import MaintenanceForm from './MaintenanceForm';
-import { Pencil, Trash2, Eye, Truck, CheckCircle } from 'lucide-react';
+import { Pencil, Trash2, Eye, Truck, CheckCircle, User } from 'lucide-react';
 import { deleteMaintenanceRecord, updateMaintenanceRecord } from '@/data/maintenanceData';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from './ui/input';
@@ -120,13 +120,14 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
               <TableHead>Patrimônio</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Recebido em</TableHead>
+              <TableHead>Registrado por</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {records.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
                   Nenhum registro encontrado.
                 </TableCell>
               </TableRow>
@@ -140,6 +141,14 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
                     <StatusBadge status={record.status} />
                   </TableCell>
                   <TableCell>{format(new Date(record.dateReceived), 'dd/MM/yyyy')}</TableCell>
+                  <TableCell>
+                    {record.registeredBy ? (
+                      <span className="flex items-center">
+                        <User className="h-3 w-3 mr-1 text-gray-400" />
+                        {record.registeredBy}
+                      </span>
+                    ) : '-'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -272,6 +281,13 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
                   <p className="text-gray-500">Recebido em</p>
                   <p className="font-medium">{format(new Date(selectedRecord.dateReceived), 'dd/MM/yyyy')}</p>
                 </div>
+                
+                {selectedRecord.registeredBy && (
+                  <div>
+                    <p className="text-gray-500">Registrado por</p>
+                    <p className="font-medium">{selectedRecord.registeredBy}</p>
+                  </div>
+                )}
                 
                 {selectedRecord.dateSentToService && (
                   <div>

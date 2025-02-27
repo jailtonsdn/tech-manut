@@ -1,77 +1,101 @@
 
-import { useState } from 'react';
-import { Battery, Laptop, Printer, Menu } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Menu, X, BarChart2, LogOut } from "lucide-react";
 
-interface NavbarProps {
-  activeFilter: string;
-  onFilterChange: (filter: string) => void;
-}
-
-const Navbar = ({ activeFilter, onFilterChange }: NavbarProps) => {
+const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const handleFilterClick = (filter: string) => {
-    onFilterChange(filter);
-    setIsMenuOpen(false);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
-  const navItems = [
-    { id: 'all', label: 'Todos', icon: null },
-    { id: 'ups', label: 'Nobreaks', icon: <Battery className="h-4 w-4 mr-2" /> },
-    { id: 'printer', label: 'Impressoras', icon: <Printer className="h-4 w-4 mr-2" /> },
-    { id: 'computer', label: 'Computadores', icon: <Laptop className="h-4 w-4 mr-2" /> },
-  ];
-
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container flex items-center justify-between h-16 mx-auto px-4">
-        <div className="flex items-center">
-          <h1 className="text-lg font-semibold tracking-tight">Sistema de Manutenção de TI</h1>
+    <nav className="bg-gray-800 text-white shadow-md">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between h-16">
+          <div className="flex items-center">
+            <span className="text-xl font-bold">Sistema de Manutenção</span>
+          </div>
+
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/" className="px-3 py-2 rounded hover:bg-gray-700">
+              Equipamentos
+            </Link>
+            <Link to="/dashboard" className="px-3 py-2 rounded hover:bg-gray-700">
+              Dashboard
+            </Link>
+            <div className="ml-4 flex items-center space-x-2">
+              <span>Olá, {user?.name}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="text-white border-gray-600 hover:bg-gray-700"
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                Sair
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="text-gray-300 hover:text-white focus:outline-none"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1">
-          {navItems.map((item) => (
-            <Button
-              key={item.id}
-              variant={activeFilter === item.id ? "default" : "ghost"}
-              className={`text-sm ${activeFilter === item.id ? 'bg-gray-900 text-white' : ''}`}
-              onClick={() => handleFilterClick(item.id)}
-            >
-              {item.icon}
-              {item.label}
-            </Button>
-          ))}
-        </nav>
-
-        {/* Mobile Navigation */}
-        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-          <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="right" className="w-[240px] sm:w-[280px]">
-            <nav className="flex flex-col gap-4 mt-6">
-              {navItems.map((item) => (
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden pb-4">
+            <div className="flex flex-col space-y-2">
+              <Link
+                to="/"
+                className="px-3 py-2 rounded hover:bg-gray-700"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Equipamentos
+              </Link>
+              <Link
+                to="/dashboard"
+                className="px-3 py-2 rounded hover:bg-gray-700"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <BarChart2 className="h-4 w-4 inline mr-1" />
+                Dashboard
+              </Link>
+              <div className="flex items-center justify-between border-t border-gray-700 pt-2 mt-2">
+                <span>Olá, {user?.name}</span>
                 <Button
-                  key={item.id}
-                  variant={activeFilter === item.id ? "default" : "ghost"}
-                  className={`justify-start ${activeFilter === item.id ? 'bg-gray-900 text-white' : ''}`}
-                  onClick={() => handleFilterClick(item.id)}
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-white border-gray-600 hover:bg-gray-700"
                 >
-                  {item.icon}
-                  {item.label}
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Sair
                 </Button>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </header>
+    </nav>
   );
 };
 
