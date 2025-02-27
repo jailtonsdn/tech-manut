@@ -8,9 +8,10 @@ export interface User {
   role: UserRole;
 }
 
-// Atualizando para corresponder à estrutura do seu banco de dados
+// Interface que mapeia os campos do MySQL para nomes amigáveis no frontend
 export interface MaintenanceRecord {
-  id: number; // Alterado para number pois é int(11) no MySQL
+  id: number;
+  // Campos originais do banco
   nome_equipamento: string;
   placa_patrimonio: string;
   filial: number;
@@ -23,4 +24,18 @@ export interface MaintenanceRecord {
   observacao: string;
   imagem: string;
   excluido: string;
+  
+  // Mapeamento para campos amigáveis (para compatibilidade com o código existente)
+  equipmentName?: string;
+  assetTag?: string;
+  branch?: string;
+  department?: string;
+  dateReceived?: string;
+  dateSentToService?: string;
+  dateReturned?: string;
+  equipmentType?: string;
+  notes?: string;
+  invoiceNumber?: string;
+  value?: number;
+  registeredBy?: string;
 }
