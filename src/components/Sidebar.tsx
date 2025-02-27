@@ -50,7 +50,7 @@ const Sidebar = ({ activeFilter = 'all', onFilterChange }: SidebarProps) => {
   return (
     <div
       className={cn(
-        "bg-gray-800 text-white h-screen flex flex-col transition-all duration-300",
+        "bg-gray-800 text-white h-screen flex flex-col transition-all duration-300 sticky top-0",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
