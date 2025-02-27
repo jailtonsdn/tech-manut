@@ -1,12 +1,20 @@
 
 import fetchAPI from './api';
-import { MaintenanceRecord } from '@/types';
+import { MaintenanceRecord, MaintenanceStatus } from '@/types';
 
 // Quando estiver em desenvolvimento, continua usando o localStorage
 const isDev = process.env.NODE_ENV === 'development';
 
 // Funções de mapeamento entre os campos do MySQL e os campos do frontend
 function mapToFrontendFields(record: MaintenanceRecord): MaintenanceRecord {
+  // Mapear o status do banco para o formato de MaintenanceStatus
+  let statusMapped: MaintenanceStatus = 'received';
+  if (record.status === 'sent' || record.status === 'em_manutencao') {
+    statusMapped = 'sent';
+  } else if (record.status === 'completed' || record.status === 'concluido') {
+    statusMapped = 'completed';
+  }
+
   return {
     ...record,
     // Mapeia campos do banco para nomes amigáveis no frontend
@@ -18,7 +26,7 @@ function mapToFrontendFields(record: MaintenanceRecord): MaintenanceRecord {
     dateSentToService: record.data_entrega,
     dateReturned: record.data_devolucao,
     notes: record.observacao,
-    // Adicionar mapeamento de status
+    status: statusMapped as string, // Aqui garantimos que o status está no formato correto
     // Definir equipmentType com base em alguma lógica ou campo padrão
     equipmentType: 'computer', // Valor padrão, ajuste conforme necessário
   };
