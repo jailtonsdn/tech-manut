@@ -169,6 +169,63 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
                 </SelectContent>
               </Select>
             </div>
+            
+            {/* Só mostra campos de status "sent" e "completed" na edição */}
+            {isEditing && (
+              <>
+                {(formData.status === 'sent' || formData.status === 'completed') && (
+                  <div className="space-y-2">
+                    <Label htmlFor="dateSentToService">Data de Entrega</Label>
+                    <Input
+                      id="dateSentToService"
+                      name="dateSentToService"
+                      type="date"
+                      value={formData.dateSentToService || ''}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                )}
+                
+                {formData.status === 'completed' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="dateReturned">Data de Devolução</Label>
+                      <Input
+                        id="dateReturned"
+                        name="dateReturned"
+                        type="date"
+                        value={formData.dateReturned || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="invoiceNumber">Número NFE</Label>
+                      <Input
+                        id="invoiceNumber"
+                        name="invoiceNumber"
+                        placeholder="Ex: NFE-5678"
+                        value={formData.invoiceNumber || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="value">Valor (R$)</Label>
+                      <Input
+                        id="value"
+                        name="value"
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        value={formData.value || ''}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            )}
           </div>
           
           <div className="space-y-2">
