@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StatusBadge from './StatusBadge';
 import MaintenanceForm from './MaintenanceForm';
-import { Pencil, Trash2, Eye } from 'lucide-react';
-import { deleteMaintenanceRecord } from '@/data/maintenanceData';
+import { Pencil, Trash2, Eye, Truck, CheckCircle } from 'lucide-react';
+import { deleteMaintenanceRecord, updateMaintenanceRecord } from '@/data/maintenanceData';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 interface MaintenanceTableProps {
   records: MaintenanceRecord[];
@@ -22,6 +24,12 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
   const [selectedRecord, setSelectedRecord] = useState<MaintenanceRecord | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [dateSent, setDateSent] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [dateReturned, setDateReturned] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [value, setValue] = useState('');
   
   const handleDelete = (id: string) => {
     deleteMaintenanceRecord(id);
@@ -29,6 +37,58 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
       title: "Registro excluído",
       description: "O registro foi removido com sucesso.",
     });
+    onUpdate();
+  };
+  
+  const handleSendToService = () => {
+    if (!selectedRecord) return;
+    
+    if (!dateSent) {
+      toast({
+        title: "Data obrigatória",
+        description: "Por favor, informe a data de envio.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    updateMaintenanceRecord({
+      ...selectedRecord,
+      status: 'sent',
+      dateSentToService: dateSent
+    });
+    toast({
+      title: "Status atualizado",
+      description: "Equipamento enviado para manutenção.",
+    });
+    setShowSendDialog(false);
+    onUpdate();
+  };
+  
+  const handleCompleteService = () => {
+    if (!selectedRecord) return;
+    
+    if (!dateReturned) {
+      toast({
+        title: "Data obrigatória",
+        description: "Por favor, informe a data de retorno.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    updateMaintenanceRecord({
+      ...selectedRecord,
+      status: 'completed',
+      dateReturned: dateReturned,
+      invoiceNumber: invoiceNumber,
+      value: value ? parseFloat(value) : undefined
+    });
+    toast({
+      title: "Status atualizado",
+      description: "Manutenção concluída com sucesso.",
+    });
+    setShowCompleteDialog(false);
     onUpdate();
   };
   
@@ -105,6 +165,36 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Editar</span>
                       </Button>
+                      
+                      {record.status === 'received' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          onClick={() => {
+                            setSelectedRecord(record);
+                            setShowSendDialog(true);
+                          }}
+                        >
+                          <Truck className="h-4 w-4" />
+                          <span className="sr-only">Entregue</span>
+                        </Button>
+                      )}
+                      
+                      {record.status === 'sent' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          onClick={() => {
+                            setSelectedRecord(record);
+                            setShowCompleteDialog(true);
+                          }}
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="sr-only">Devolvido</span>
+                        </Button>
+                      )}
                       
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
@@ -220,6 +310,82 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Send to Service Dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent>
+          <h3 className="text-lg font-medium mb-4">Entregue para Manutenção</h3>
+          <form onSubmit={(e) => { e.preventDefault(); handleSendToService(); }}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateSent">Data de Entrega</Label>
+                <Input
+                  id="dateSent"
+                  type="date"
+                  value={dateSent}
+                  onChange={(e) => setDateSent(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" type="button" onClick={() => setShowSendDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">Confirmar</Button>
+              </div>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Complete Service Dialog */}
+      <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+        <DialogContent>
+          <h3 className="text-lg font-medium mb-4">Devolvido da Manutenção</h3>
+          <form onSubmit={(e) => { e.preventDefault(); handleCompleteService(); }}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="dateReturned">Data de Devolução</Label>
+                <Input
+                  id="dateReturned"
+                  type="date"
+                  value={dateReturned}
+                  onChange={(e) => setDateReturned(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="invoiceNumber">Número NFE</Label>
+                <Input
+                  id="invoiceNumber"
+                  placeholder="Ex: NFE-5678"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="value">Valor (R$)</Label>
+                <Input
+                  id="value"
+                  type="number"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" type="button" onClick={() => setShowCompleteDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit">Confirmar</Button>
+              </div>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
     </>
