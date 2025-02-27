@@ -1,261 +1,265 @@
 
 import { useState, useEffect } from 'react';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { getMaintenanceRecords } from '@/data/maintenanceData';
+import { MaintenanceRecord } from '@/types';
+import MaintenanceCard from '@/components/MaintenanceCard';
+import MaintenanceTable from '@/components/MaintenanceTable';
+import MaintenanceForm from '@/components/MaintenanceForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MaintenanceRecord } from '@/types';
-import { getMaintenanceRecords } from '@/data/maintenanceData';
-import MaintenanceForm from '@/components/MaintenanceForm';
-import MaintenanceTable from '@/components/MaintenanceTable';
-import MaintenanceCard from '@/components/MaintenanceCard';
-import Navbar from '@/components/Navbar';
-import { Plus, Search, LayoutList, LayoutGrid } from 'lucide-react';
+import { Plus, Search, SlidersHorizontal, CheckCircle, Truck, Clock } from 'lucide-react';
+import Layout from '@/components/Layout';
 
 const Index = () => {
   const [records, setRecords] = useState<MaintenanceRecord[]>([]);
-  const [filteredRecords, setFilteredRecords] = useState<MaintenanceRecord[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [view, setView] = useState<'list' | 'grid'>('list');
+  const [showFilterDialog, setShowFilterDialog] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [activeStatus, setActiveStatus] = useState('all');
-  
-  const isMobile = useMediaQuery("(max-width: 768px)");
-  
-  // Load records from localStorage
+
+  // Filtros adicionais
+  const [filterType, setFilterType] = useState<string | null>(null);
+  const [filterBranch, setFilterBranch] = useState<string | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadRecords();
+  }, []);
+
   const loadRecords = () => {
     const allRecords = getMaintenanceRecords();
     setRecords(allRecords);
-    
-    // Apply any existing filters
-    applyFilters(allRecords, searchQuery, activeFilter, activeStatus);
   };
-  
-  // Apply both search and type filters
-  const applyFilters = (recordsToFilter: MaintenanceRecord[], query: string, filter: string, status: string) => {
-    let result = [...recordsToFilter];
-    
-    // Apply equipment type filter
-    if (filter !== 'all') {
-      result = result.filter(record => record.equipmentType === filter);
-    }
-    
-    // Apply status filter
-    if (status !== 'all') {
-      result = result.filter(record => record.status === status);
-    }
-    
-    // Apply search query if present
-    if (query.trim()) {
-      const searchLower = query.toLowerCase();
-      result = result.filter(record => 
-        record.equipmentName.toLowerCase().includes(searchLower) ||
-        record.assetTag.toLowerCase().includes(searchLower) ||
-        (record.invoiceNumber && record.invoiceNumber.toLowerCase().includes(searchLower))
-      );
-    }
-    
-    setFilteredRecords(result);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
-  
-  // Handle search input change
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    applyFilters(records, query, activeFilter, activeStatus);
-  };
-  
-  // Handle filter change
+
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter);
-    applyFilters(records, searchQuery, filter, activeStatus);
   };
-  
-  // Handle status filter change
-  const handleStatusChange = (status: string) => {
-    setActiveStatus(status);
-    applyFilters(records, searchQuery, activeFilter, status);
+
+  const handleClearFilters = () => {
+    setFilterType(null);
+    setFilterBranch(null);
+    setFilterDepartment(null);
+    setShowFilterDialog(false);
   };
-  
-  // Initialize on component mount
-  useEffect(() => {
-    loadRecords();
+
+  const handleApplyFilters = () => {
+    setShowFilterDialog(false);
+  };
+
+  // Função para filtrar os registros com base em todos os filtros
+  const filteredRecords = records.filter(record => {
+    // Filtro por texto de busca
+    const matchesSearch = 
+      record.equipmentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      record.assetTag.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (record.notes && record.notes.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (record.branch && record.branch.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (record.department && record.department.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    // Set view based on screen size
-    if (isMobile) {
-      setView('grid');
-    }
-  }, [isMobile]);
-  
+    // Filtro por status
+    const matchesStatus = 
+      activeFilter === 'all' ||
+      (activeFilter === 'received' && record.status === 'received') ||
+      (activeFilter === 'sent' && record.status === 'sent') ||
+      (activeFilter === 'completed' && record.status === 'completed');
+    
+    // Filtros adicionais
+    const matchesType = !filterType || record.equipmentType === filterType;
+    const matchesBranch = !filterBranch || (record.branch && record.branch.toLowerCase().includes(filterBranch.toLowerCase()));
+    const matchesDepartment = !filterDepartment || (record.department && record.department.toLowerCase().includes(filterDepartment.toLowerCase()));
+    
+    return matchesSearch && matchesStatus && matchesType && matchesBranch && matchesDepartment;
+  });
+
+  // Opções únicas para os filtros
+  const typeOptions = [...new Set(records.map(r => r.equipmentType))];
+  const branchOptions = [...new Set(records.filter(r => r.branch).map(r => r.branch as string))];
+  const departmentOptions = [...new Set(records.filter(r => r.department).map(r => r.department as string))];
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar activeFilter={activeFilter} onFilterChange={handleFilterChange} />
-      
-      <main className="flex-1 container px-4 py-6 mx-auto">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="w-full sm:w-auto flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Pesquisar por nome, patrimônio ou NFE..."
+    <Layout activeFilter={activeFilter} onFilterChange={handleFilterChange}>
+      <div className="flex flex-col gap-6 mb-10">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Equipamentos em Manutenção</h1>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Novo Equipamento
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] p-0">
+              <MaintenanceForm onSubmit={() => {
+                setShowAddDialog(false);
+                loadRecords();
+              }} />
+            </DialogContent>
+          </Dialog>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+          <div className="flex-1 w-full md:w-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input 
+                placeholder="Buscar equipamentos..." 
                 value={searchQuery}
-                onChange={handleSearchChange}
-                className="pl-10 bg-white"
+                onChange={handleSearch}
+                className="pl-10"
               />
-            </div>
-            
-            <div className="flex gap-2 w-full sm:w-auto">
-              {!isMobile && (
-                <div className="bg-white border rounded-md p-1 flex">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={view === 'list' ? 'bg-gray-100' : ''}
-                    onClick={() => setView('list')}
-                  >
-                    <LayoutList className="h-4 w-4" />
-                    <span className="sr-only">Lista</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={view === 'grid' ? 'bg-gray-100' : ''}
-                    onClick={() => setView('grid')}
-                  >
-                    <LayoutGrid className="h-4 w-4" />
-                    <span className="sr-only">Grid</span>
-                  </Button>
-                </div>
-              )}
-              
-              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black transition-all duration-300">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Novo Equipamento
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] p-0">
-                  <MaintenanceForm 
-                    onSubmit={() => {
-                      setShowAddDialog(false);
-                      loadRecords();
-                    }} 
-                  />
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-sm border">
-            <Tabs defaultValue="all" className="w-full" onValueChange={handleStatusChange}>
-              <div className="px-4 pt-4">
-                <TabsList className="grid grid-cols-4 w-full">
-                  <TabsTrigger value="all">Todos</TabsTrigger>
-                  <TabsTrigger value="received">Recebidos</TabsTrigger>
-                  <TabsTrigger value="sent">Em Manutenção</TabsTrigger>
-                  <TabsTrigger value="completed">Concluídos</TabsTrigger>
+          <div className="flex flex-wrap gap-2 items-center">
+            <Button 
+              variant={activeFilter === 'all' ? "default" : "outline"} 
+              onClick={() => handleFilterChange('all')}
+              size="sm"
+            >
+              Todos
+            </Button>
+            <Button 
+              variant={activeFilter === 'received' ? "default" : "outline"} 
+              onClick={() => handleFilterChange('received')}
+              size="sm"
+              className={activeFilter === 'received' ? "bg-orange-600 hover:bg-orange-700" : ""}
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Lançados
+            </Button>
+            <Button 
+              variant={activeFilter === 'sent' ? "default" : "outline"} 
+              onClick={() => handleFilterChange('sent')}
+              size="sm"
+              className={activeFilter === 'sent' ? "bg-blue-600 hover:bg-blue-700" : ""}
+            >
+              <Truck className="h-4 w-4 mr-1" />
+              Em Manutenção
+            </Button>
+            <Button 
+              variant={activeFilter === 'completed' ? "default" : "outline"} 
+              onClick={() => handleFilterChange('completed')}
+              size="sm"
+              className={activeFilter === 'completed' ? "bg-green-600 hover:bg-green-700" : ""}
+            >
+              <CheckCircle className="h-4 w-4 mr-1" />
+              Concluídos
+            </Button>
+            
+            <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <SlidersHorizontal className="h-4 w-4 mr-1" />
+                  Mais Filtros
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <h3 className="text-lg font-medium mb-4">Filtros Avançados</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Tipo de Equipamento</label>
+                    <select
+                      value={filterType || ''}
+                      onChange={(e) => setFilterType(e.target.value || null)}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="">Todos</option>
+                      {typeOptions.map(type => (
+                        <option key={type} value={type}>
+                          {type === 'ups' ? 'Nobreak' : type === 'printer' ? 'Impressora' : 'Computador'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Filial</label>
+                    <select
+                      value={filterBranch || ''}
+                      onChange={(e) => setFilterBranch(e.target.value || null)}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="">Todas</option>
+                      {branchOptions.map(branch => (
+                        <option key={branch} value={branch}>{branch}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Setor</label>
+                    <select
+                      value={filterDepartment || ''}
+                      onChange={(e) => setFilterDepartment(e.target.value || null)}
+                      className="w-full p-2 border rounded-md"
+                    >
+                      <option value="">Todos</option>
+                      {departmentOptions.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <Button variant="outline" onClick={handleClearFilters}>
+                      Limpar
+                    </Button>
+                    <Button onClick={handleApplyFilters}>
+                      Aplicar
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <div className="ml-auto">
+              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'grid' | 'list')}>
+                <TabsList>
+                  <TabsTrigger value="grid">Cards</TabsTrigger>
+                  <TabsTrigger value="list">Tabela</TabsTrigger>
                 </TabsList>
-              </div>
-              
-              <TabsContent value="all" className="p-4">
-                {view === 'list' && !isMobile ? (
-                  <MaintenanceTable records={filteredRecords} onUpdate={loadRecords} />
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRecords.length === 0 ? (
-                      <div className="col-span-full flex items-center justify-center py-10 text-center">
-                        <div className="max-w-sm">
-                          <p className="text-gray-500">Nenhum equipamento encontrado.</p>
-                          <Button 
-                            variant="outline" 
-                            className="mt-4"
-                            onClick={() => setShowAddDialog(true)}
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Adicionar equipamento
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      filteredRecords.map(record => (
-                        <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
-                      ))
-                    )}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="received" className="p-4">
-                {view === 'list' && !isMobile ? (
-                  <MaintenanceTable records={filteredRecords} onUpdate={loadRecords} />
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRecords.length === 0 ? (
-                      <div className="col-span-full flex items-center justify-center py-10 text-center">
-                        <div className="max-w-sm">
-                          <p className="text-gray-500">Nenhum equipamento com status "Recebido".</p>
-                        </div>
-                      </div>
-                    ) : (
-                      filteredRecords.map(record => (
-                        <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
-                      ))
-                    )}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="sent" className="p-4">
-                {view === 'list' && !isMobile ? (
-                  <MaintenanceTable records={filteredRecords} onUpdate={loadRecords} />
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRecords.length === 0 ? (
-                      <div className="col-span-full flex items-center justify-center py-10 text-center">
-                        <div className="max-w-sm">
-                          <p className="text-gray-500">Nenhum equipamento com status "Em Manutenção".</p>
-                        </div>
-                      </div>
-                    ) : (
-                      filteredRecords.map(record => (
-                        <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
-                      ))
-                    )}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="completed" className="p-4">
-                {view === 'list' && !isMobile ? (
-                  <MaintenanceTable records={filteredRecords} onUpdate={loadRecords} />
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredRecords.length === 0 ? (
-                      <div className="col-span-full flex items-center justify-center py-10 text-center">
-                        <div className="max-w-sm">
-                          <p className="text-gray-500">Nenhum equipamento com status "Concluído".</p>
-                        </div>
-                      </div>
-                    ) : (
-                      filteredRecords.map(record => (
-                        <MaintenanceCard key={record.id} record={record} onUpdate={loadRecords} />
-                      ))
-                    )}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+              </Tabs>
+            </div>
           </div>
         </div>
-      </main>
-      
-      <footer className="py-4 border-t bg-white text-center text-sm text-gray-500">
-        Sistema de Manutenção de TI &copy; {new Date().getFullYear()}
-      </footer>
-    </div>
+        
+        <div className="mt-4">
+          <Tabs value={viewMode} className="w-full">
+            <TabsContent value="grid" className="mt-0">
+              {filteredRecords.length === 0 ? (
+                <div className="text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                  <p className="text-gray-500">Nenhum registro encontrado com os filtros atuais.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredRecords.map(record => (
+                    <MaintenanceCard 
+                      key={record.id} 
+                      record={record}
+                      onUpdate={loadRecords}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="list" className="mt-0">
+              <MaintenanceTable 
+                records={filteredRecords}
+                onUpdate={loadRecords}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </Layout>
   );
 };
 
