@@ -12,7 +12,7 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
     switch (status) {
       case 'received':
         return {
-          label: 'Recebido',
+          label: 'Sala da TI',
           className: 'bg-amber-100 text-amber-800 border-amber-200'
         };
       case 'sent':

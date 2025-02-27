@@ -8,9 +8,11 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import StatusBadge from './StatusBadge';
 import MaintenanceForm from './MaintenanceForm';
-import { Pencil, Trash2, Info } from 'lucide-react';
-import { deleteMaintenanceRecord } from '@/data/maintenanceData';
+import { Pencil, Trash2, Info, Truck, CheckCircle } from 'lucide-react';
+import { deleteMaintenanceRecord, updateMaintenanceRecord } from '@/data/maintenanceData';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
 
 interface MaintenanceCardProps {
   record: MaintenanceRecord;
@@ -20,6 +22,12 @@ interface MaintenanceCardProps {
 const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
   const { toast } = useToast();
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [dateSent, setDateSent] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [dateReturned, setDateReturned] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [value, setValue] = useState('');
   
   const handleDelete = () => {
     deleteMaintenanceRecord(record.id);
@@ -27,6 +35,36 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
       title: "Registro excluído",
       description: "O registro foi removido com sucesso.",
     });
+    onUpdate();
+  };
+  
+  const handleSendToService = () => {
+    updateMaintenanceRecord({
+      ...record,
+      status: 'sent',
+      dateSentToService: dateSent
+    });
+    toast({
+      title: "Status atualizado",
+      description: "Equipamento enviado para manutenção.",
+    });
+    setShowSendDialog(false);
+    onUpdate();
+  };
+  
+  const handleCompleteService = () => {
+    updateMaintenanceRecord({
+      ...record,
+      status: 'completed',
+      dateReturned: dateReturned,
+      invoiceNumber: invoiceNumber,
+      value: value ? parseFloat(value) : undefined
+    });
+    toast({
+      title: "Status atualizado",
+      description: "Manutenção concluída com sucesso.",
+    });
+    setShowCompleteDialog(false);
     onUpdate();
   };
   
@@ -68,6 +106,20 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
             <p>{format(new Date(record.dateReceived), 'dd/MM/yyyy')}</p>
           </div>
           
+          {record.branch && (
+            <div>
+              <p className="text-gray-500">Filial</p>
+              <p>{record.branch}</p>
+            </div>
+          )}
+          
+          {record.department && (
+            <div>
+              <p className="text-gray-500">Setor</p>
+              <p>{record.department}</p>
+            </div>
+          )}
+          
           {record.dateSentToService && (
             <div>
               <p className="text-gray-500">Enviado em</p>
@@ -98,26 +150,26 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
         </div>
       </CardContent>
       
-      <CardFooter className="flex justify-between pt-2 pb-4">
-        <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs">
-              <Pencil className="h-3.5 w-3.5 mr-1" />
-              Editar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] p-0">
-            <MaintenanceForm 
-              existingRecord={record} 
-              onSubmit={() => {
-                setShowEditDialog(false);
-                onUpdate();
-              }} 
-            />
-          </DialogContent>
-        </Dialog>
-        
+      <CardFooter className="flex justify-between flex-wrap pt-2 pb-4 gap-2">
         <div className="flex gap-2">
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="text-xs">
+                <Pencil className="h-3.5 w-3.5 mr-1" />
+                Editar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] p-0">
+              <MaintenanceForm 
+                existingRecord={record} 
+                onSubmit={() => {
+                  setShowEditDialog(false);
+                  onUpdate();
+                }} 
+              />
+            </DialogContent>
+          </Dialog>
+          
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="text-xs">
@@ -149,6 +201,20 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
                     <p className="text-gray-500">Recebido em</p>
                     <p className="font-medium">{format(new Date(record.dateReceived), 'dd/MM/yyyy')}</p>
                   </div>
+                  
+                  {record.branch && (
+                    <div>
+                      <p className="text-gray-500">Filial</p>
+                      <p className="font-medium">{record.branch}</p>
+                    </div>
+                  )}
+                  
+                  {record.department && (
+                    <div>
+                      <p className="text-gray-500">Setor</p>
+                      <p className="font-medium">{record.department}</p>
+                    </div>
+                  )}
                   
                   {record.dateSentToService && (
                     <div>
@@ -188,6 +254,96 @@ const MaintenanceCard = ({ record, onUpdate }: MaintenanceCardProps) => {
               </div>
             </DialogContent>
           </Dialog>
+        </div>
+        
+        <div className="flex gap-2">
+          {record.status === 'received' && (
+            <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 hover:text-blue-700">
+                  <Truck className="h-3.5 w-3.5 mr-1" />
+                  Em Manutenção
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <h3 className="text-lg font-medium mb-4">Enviar para Manutenção</h3>
+                <form onSubmit={(e) => { e.preventDefault(); handleSendToService(); }}>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dateSent">Data de Envio</Label>
+                      <Input
+                        id="dateSent"
+                        type="date"
+                        value={dateSent}
+                        onChange={(e) => setDateSent(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" type="button" onClick={() => setShowSendDialog(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit">Confirmar</Button>
+                    </div>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
+          
+          {record.status === 'sent' && (
+            <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="text-xs bg-green-50 text-green-600 border-green-200 hover:bg-green-100 hover:text-green-700">
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                  Concluído
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <h3 className="text-lg font-medium mb-4">Concluir Manutenção</h3>
+                <form onSubmit={(e) => { e.preventDefault(); handleCompleteService(); }}>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="dateReturned">Data de Retorno</Label>
+                      <Input
+                        id="dateReturned"
+                        type="date"
+                        value={dateReturned}
+                        onChange={(e) => setDateReturned(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="invoiceNumber">Número NFE</Label>
+                      <Input
+                        id="invoiceNumber"
+                        placeholder="Ex: NFE-5678"
+                        value={invoiceNumber}
+                        onChange={(e) => setInvoiceNumber(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="value">Valor (R$)</Label>
+                      <Input
+                        id="value"
+                        type="number"
+                        step="0.01"
+                        placeholder="0,00"
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" type="button" onClick={() => setShowCompleteDialog(false)}>
+                        Cancelar
+                      </Button>
+                      <Button type="submit">Confirmar</Button>
+                    </div>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
           
           <AlertDialog>
             <AlertDialogTrigger asChild>

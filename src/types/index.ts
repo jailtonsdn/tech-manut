@@ -13,4 +13,6 @@ export interface MaintenanceRecord {
   value?: number;
   notes?: string;
   equipmentType: 'ups' | 'printer' | 'computer';
+  branch?: string;
+  department?: string;
 }

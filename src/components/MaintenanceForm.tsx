@@ -26,7 +26,9 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
       assetTag: '',
       dateReceived: format(new Date(), 'yyyy-MM-dd'),
       status: 'received',
-      equipmentType: 'computer'
+      equipmentType: 'computer',
+      branch: '',
+      department: ''
     }
   );
 
@@ -71,7 +73,9 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
           assetTag: '',
           dateReceived: format(new Date(), 'yyyy-MM-dd'),
           status: 'received',
-          equipmentType: 'computer'
+          equipmentType: 'computer',
+          branch: '',
+          department: ''
         });
       }
       
@@ -121,6 +125,28 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
             </div>
             
             <div className="space-y-2">
+              <Label htmlFor="branch">Filial</Label>
+              <Input
+                id="branch"
+                name="branch"
+                placeholder="Ex: Matriz, Filial 1, etc"
+                value={formData.branch || ''}
+                onChange={handleInputChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="department">Setor</Label>
+              <Input
+                id="department"
+                name="department"
+                placeholder="Ex: Financeiro, RH, etc"
+                value={formData.department || ''}
+                onChange={handleInputChange}
+              />
+            </div>
+            
+            <div className="space-y-2">
               <Label htmlFor="equipmentType">Tipo de Equipamento</Label>
               <Select
                 value={formData.equipmentType}
@@ -147,7 +173,7 @@ const MaintenanceForm = ({ existingRecord, onSubmit }: MaintenanceFormProps) => 
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="received">Recebido</SelectItem>
+                  <SelectItem value="received">Sala da TI</SelectItem>
                   <SelectItem value="sent">Em Manutenção</SelectItem>
                   <SelectItem value="completed">Concluído</SelectItem>
                 </SelectContent>
