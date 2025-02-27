@@ -14,6 +14,8 @@ const Dashboard = () => {
   const [dateRange, setDateRange] = useState<'1m' | '3m' | '6m' | '1y' | 'custom'>('3m');
   const [startDate, setStartDate] = useState<string>(format(startOfMonth(addMonths(new Date(), -3)), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState<string>(format(endOfMonth(new Date()), 'yyyy-MM-dd'));
+  const [filterBranch, setFilterBranch] = useState<string>('');
+  const [filterDepartment, setFilterDepartment] = useState<string>('');
 
   // Cores para o gráfico de pizza
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -25,6 +27,23 @@ const Dashboard = () => {
   const completedRecords = allRecords.filter(
     record => record.status === 'completed' && record.value !== undefined
   );
+
+  // Opções para os filtros
+  const branchOptions = useMemo(() => {
+    const branches = new Set<string>();
+    completedRecords.forEach(record => {
+      if (record.branch) branches.add(record.branch);
+    });
+    return Array.from(branches);
+  }, [completedRecords]);
+
+  const departmentOptions = useMemo(() => {
+    const departments = new Set<string>();
+    completedRecords.forEach(record => {
+      if (record.department) departments.add(record.department);
+    });
+    return Array.from(departments);
+  }, [completedRecords]);
 
   // Atualiza o intervalo de datas com base na seleção
   const handleDateRangeChange = (value: string) => {
@@ -56,18 +75,26 @@ const Dashboard = () => {
     setDateRange(value as '1m' | '3m' | '6m' | '1y' | 'custom');
   };
 
-  // Filtra registros dentro do intervalo de datas selecionado
+  // Filtra registros dentro do intervalo de datas selecionado e com filtros de filial e setor
   const filteredRecords = useMemo(() => {
     return completedRecords.filter(record => {
       if (!record.dateReturned) return false;
       
+      // Filtro de data
       const recordDate = new Date(record.dateReturned);
       const start = parse(startDate, 'yyyy-MM-dd', new Date());
       const end = parse(endDate, 'yyyy-MM-dd', new Date());
+      const isInDateRange = isWithinInterval(recordDate, { start, end });
       
-      return isWithinInterval(recordDate, { start, end });
+      // Filtro de filial
+      const matchesBranch = !filterBranch || record.branch === filterBranch;
+      
+      // Filtro de setor
+      const matchesDepartment = !filterDepartment || record.department === filterDepartment;
+      
+      return isInDateRange && matchesBranch && matchesDepartment;
     });
-  }, [completedRecords, startDate, endDate]);
+  }, [completedRecords, startDate, endDate, filterBranch, filterDepartment]);
 
   // Calcula o custo total
   const totalCost = useMemo(() => {
@@ -106,6 +133,36 @@ const Dashboard = () => {
     }));
   }, [filteredRecords]);
 
+  // Prepara dados para gráfico por filial
+  const costByBranch = useMemo(() => {
+    const costs: Record<string, number> = {};
+    
+    filteredRecords.forEach(record => {
+      const branch = record.branch || 'Não especificado';
+      costs[branch] = (costs[branch] || 0) + (record.value || 0);
+    });
+    
+    return Object.entries(costs).map(([branch, value]) => ({
+      name: branch,
+      value
+    }));
+  }, [filteredRecords]);
+
+  // Prepara dados para gráfico por setor
+  const costByDepartment = useMemo(() => {
+    const costs: Record<string, number> = {};
+    
+    filteredRecords.forEach(record => {
+      const department = record.department || 'Não especificado';
+      costs[department] = (costs[department] || 0) + (record.value || 0);
+    });
+    
+    return Object.entries(costs).map(([department, value]) => ({
+      name: department,
+      value
+    }));
+  }, [filteredRecords]);
+
   // Função para formatar valores em reais
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -125,7 +182,7 @@ const Dashboard = () => {
             <CardTitle>Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div>
                 <Label htmlFor="dateRange">Período</Label>
                 <Select value={dateRange} onValueChange={handleDateRangeChange}>
@@ -162,6 +219,38 @@ const Dashboard = () => {
                   onChange={(e) => setEndDate(e.target.value)}
                   disabled={dateRange !== 'custom'}
                 />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="filterBranch">Filial</Label>
+                <Select value={filterBranch} onValueChange={setFilterBranch}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todas as filiais" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todas as filiais</SelectItem>
+                    {branchOptions.map(branch => (
+                      <SelectItem key={branch} value={branch}>{branch}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="filterDepartment">Setor</Label>
+                <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os setores" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Todos os setores</SelectItem>
+                    {departmentOptions.map(dept => (
+                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardContent>
@@ -257,6 +346,64 @@ const Dashboard = () => {
                     <Tooltip formatter={(value) => formatCurrency(value as number)} />
                     <Legend />
                     <Bar dataKey="value" name="Valor" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Gráfico de custos por filial */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Custo por Filial</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={costByBranch}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                    <Legend />
+                    <Bar dataKey="value" name="Valor" fill="#82ca9d" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Gráfico de custos por setor */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Custo por Setor</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={costByDepartment}
+                    margin={{
+                      top: 5,
+                      right: 30,
+                      left: 20,
+                      bottom: 5,
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                    <Legend />
+                    <Bar dataKey="value" name="Valor" fill="#ffc658" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

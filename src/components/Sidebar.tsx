@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { BarChart2, LogOut, Home, Menu, X, Tool } from "lucide-react";
+import { BarChart2, LogOut, Home, Menu, X, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SidebarProps {
@@ -91,6 +91,9 @@ const Sidebar = ({ activeFilter = 'all', onFilterChange }: SidebarProps) => {
         </MenuItem>
         <MenuItem to="/dashboard" icon={<BarChart2 className="h-5 w-5" />}>
           Dashboard
+        </MenuItem>
+        <MenuItem to="/invoices" icon={<Receipt className="h-5 w-5" />}>
+          Notas Fiscais
         </MenuItem>
       </div>
 

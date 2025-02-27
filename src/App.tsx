@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Invoices from "./pages/Invoices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,6 +42,12 @@ const AppRoutes = () => {
       <Route path="/dashboard" element={
         <PrivateRoute>
           <Dashboard />
+        </PrivateRoute>
+      } />
+      
+      <Route path="/invoices" element={
+        <PrivateRoute>
+          <Invoices />
         </PrivateRoute>
       } />
       
