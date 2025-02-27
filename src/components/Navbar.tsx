@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { MobileIcon, Laptop, Printer, Menu, X } from 'lucide-react';
+import { Battery, Laptop, Printer, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
@@ -19,7 +19,7 @@ const Navbar = ({ activeFilter, onFilterChange }: NavbarProps) => {
 
   const navItems = [
     { id: 'all', label: 'Todos', icon: null },
-    { id: 'ups', label: 'Nobreaks', icon: <MobileIcon className="h-4 w-4 mr-2" /> },
+    { id: 'ups', label: 'Nobreaks', icon: <Battery className="h-4 w-4 mr-2" /> },
     { id: 'printer', label: 'Impressoras', icon: <Printer className="h-4 w-4 mr-2" /> },
     { id: 'computer', label: 'Computadores', icon: <Laptop className="h-4 w-4 mr-2" /> },
   ];
