@@ -33,11 +33,11 @@ interface Invoice {
 }
 
 // Mock de dados para notas fiscais
-const generateMockInvoices = (): Invoice[] => {
-  const records = getMaintenanceRecords().filter(r => r.status === 'completed' && r.invoiceNumber);
+const generateMockInvoices = (records: MaintenanceRecord[]): Invoice[] => {
+  const completedRecords = records.filter(r => r.status === 'completed' && r.invoiceNumber);
   const invoiceMap: Record<string, Invoice> = {};
 
-  records.forEach(record => {
+  completedRecords.forEach(record => {
     if (!record.invoiceNumber || !record.value || !record.dateReturned) return;
     
     if (!invoiceMap[record.invoiceNumber]) {
@@ -48,8 +48,8 @@ const generateMockInvoices = (): Invoice[] => {
         totalValue: record.value,
         items: [{
           id: `item-${Math.random().toString(36).substring(2, 9)}`,
-          equipmentId: record.id,
-          equipmentName: record.equipmentName,
+          equipmentId: record.id.toString(),
+          equipmentName: record.equipmentName || '',
           branch: record.branch,
           department: record.department,
           value: record.value
@@ -60,8 +60,8 @@ const generateMockInvoices = (): Invoice[] => {
       invoiceMap[record.invoiceNumber].totalValue += record.value;
       invoiceMap[record.invoiceNumber].items.push({
         id: `item-${Math.random().toString(36).substring(2, 9)}`,
-        equipmentId: record.id,
-        equipmentName: record.equipmentName,
+        equipmentId: record.id.toString(),
+        equipmentName: record.equipmentName || '',
         branch: record.branch,
         department: record.department,
         value: record.value
@@ -96,11 +96,20 @@ const Invoices = () => {
   });
   
   const { toast } = useToast();
-  const maintenanceRecords = getMaintenanceRecords();
+  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
   
   useEffect(() => {
-    // Na implementação real, isso seria uma chamada à API
-    setInvoices(generateMockInvoices());
+    const fetchRecords = async () => {
+      try {
+        const records = await getMaintenanceRecords();
+        setMaintenanceRecords(records);
+        setInvoices(generateMockInvoices(records));
+      } catch (error) {
+        console.error("Erro ao buscar registros:", error);
+      }
+    };
+    
+    fetchRecords();
   }, []);
 
   // Opções de filtro baseadas nos dados disponíveis

@@ -31,16 +31,25 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [value, setValue] = useState('');
   
-  const handleDelete = (id: string) => {
-    deleteMaintenanceRecord(id);
-    toast({
-      title: "Registro excluído",
-      description: "O registro foi removido com sucesso.",
-    });
-    onUpdate();
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteMaintenanceRecord(id);
+      toast({
+        title: "Registro excluído",
+        description: "O registro foi removido com sucesso.",
+      });
+      onUpdate();
+    } catch (error) {
+      console.error("Erro ao excluir:", error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o registro.",
+        variant: "destructive"
+      });
+    }
   };
   
-  const handleSendToService = () => {
+  const handleSendToService = async () => {
     if (!selectedRecord) return;
     
     if (!dateSent) {
@@ -52,20 +61,29 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
       return;
     }
 
-    updateMaintenanceRecord({
-      ...selectedRecord,
-      status: 'sent',
-      dateSentToService: dateSent
-    });
-    toast({
-      title: "Status atualizado",
-      description: "Equipamento enviado para manutenção.",
-    });
-    setShowSendDialog(false);
-    onUpdate();
+    try {
+      await updateMaintenanceRecord({
+        ...selectedRecord,
+        status: 'sent' as any,
+        dateSentToService: dateSent
+      });
+      toast({
+        title: "Status atualizado",
+        description: "Equipamento enviado para manutenção.",
+      });
+      setShowSendDialog(false);
+      onUpdate();
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive"
+      });
+    }
   };
   
-  const handleCompleteService = () => {
+  const handleCompleteService = async () => {
     if (!selectedRecord) return;
     
     if (!dateReturned) {
@@ -77,19 +95,28 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
       return;
     }
 
-    updateMaintenanceRecord({
-      ...selectedRecord,
-      status: 'completed',
-      dateReturned: dateReturned,
-      invoiceNumber: invoiceNumber,
-      value: value ? parseFloat(value) : undefined
-    });
-    toast({
-      title: "Status atualizado",
-      description: "Manutenção concluída com sucesso.",
-    });
-    setShowCompleteDialog(false);
-    onUpdate();
+    try {
+      await updateMaintenanceRecord({
+        ...selectedRecord,
+        status: 'completed' as any,
+        dateReturned: dateReturned,
+        invoiceNumber: invoiceNumber,
+        value: value ? parseFloat(value) : undefined
+      });
+      toast({
+        title: "Status atualizado",
+        description: "Manutenção concluída com sucesso.",
+      });
+      setShowCompleteDialog(false);
+      onUpdate();
+    } catch (error) {
+      console.error("Erro ao atualizar:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o status.",
+        variant: "destructive"
+      });
+    }
   };
   
   const getEquipmentTypeLabel = (type: string) => {
@@ -135,12 +162,12 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
               records.map((record) => (
                 <TableRow key={record.id}>
                   <TableCell className="font-medium">{record.equipmentName}</TableCell>
-                  <TableCell>{getEquipmentTypeLabel(record.equipmentType)}</TableCell>
+                  <TableCell>{getEquipmentTypeLabel(record.equipmentType || '')}</TableCell>
                   <TableCell>{record.assetTag}</TableCell>
                   <TableCell>
                     <StatusBadge status={record.status} />
                   </TableCell>
-                  <TableCell>{format(new Date(record.dateReceived), 'dd/MM/yyyy')}</TableCell>
+                  <TableCell>{record.dateReceived ? format(new Date(record.dateReceived), 'dd/MM/yyyy') : '-'}</TableCell>
                   <TableCell>
                     {record.registeredBy ? (
                       <span className="flex items-center">
@@ -271,7 +298,7 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
                 </div>
                 <div>
                   <p className="text-gray-500">Tipo</p>
-                  <p className="font-medium">{getEquipmentTypeLabel(selectedRecord.equipmentType)}</p>
+                  <p className="font-medium">{getEquipmentTypeLabel(selectedRecord.equipmentType || '')}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Status</p>
@@ -279,7 +306,7 @@ const MaintenanceTable = ({ records, onUpdate }: MaintenanceTableProps) => {
                 </div>
                 <div>
                   <p className="text-gray-500">Recebido em</p>
-                  <p className="font-medium">{format(new Date(selectedRecord.dateReceived), 'dd/MM/yyyy')}</p>
+                  <p className="font-medium">{selectedRecord.dateReceived ? format(new Date(selectedRecord.dateReceived), 'dd/MM/yyyy') : '-'}</p>
                 </div>
                 
                 {selectedRecord.registeredBy && (
