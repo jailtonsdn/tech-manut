@@ -8,19 +8,19 @@ export interface User {
   role: UserRole;
 }
 
+// Atualizando para corresponder à estrutura do seu banco de dados
 export interface MaintenanceRecord {
-  id: string;
-  equipmentName: string;
-  assetTag: string;
-  dateReceived: string;
-  dateSentToService?: string;
-  dateReturned?: string;
-  status: MaintenanceStatus;
-  invoiceNumber?: string;
-  value?: number;
-  notes?: string;
-  equipmentType: 'ups' | 'printer' | 'computer';
-  branch?: string;
-  department?: string;
-  registeredBy?: string; // Nome do usuário que registrou
+  id: number; // Alterado para number pois é int(11) no MySQL
+  nome_equipamento: string;
+  placa_patrimonio: string;
+  filial: number;
+  setor?: string;
+  destino?: string;
+  data_abertura: string;
+  data_entrega?: string;
+  data_devolucao?: string;
+  status: string;
+  observacao: string;
+  imagem: string;
+  excluido: string;
 }

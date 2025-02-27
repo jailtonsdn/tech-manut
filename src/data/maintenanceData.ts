@@ -1,5 +1,4 @@
 
-// Importamos do serviço que agora suporta tanto localStorage quanto API
 import { 
   getMaintenanceRecords as getRecords,
   addMaintenanceRecord as addRecord,
@@ -8,14 +7,9 @@ import {
 } from '@/services/maintenanceService';
 import { MaintenanceRecord } from '@/types';
 
-// Reexportamos as funções do serviço para manter compatibilidade
 export const getMaintenanceRecords = async (): Promise<MaintenanceRecord[]> => {
-  try {
-    return await getRecords();
-  } catch (error) {
-    console.error('Erro ao buscar registros:', error);
-    return [];
-  }
+  const records = await getRecords();
+  return records;
 };
 
 export const addMaintenanceRecord = async (
@@ -40,7 +34,7 @@ export const updateMaintenanceRecord = async (
   }
 };
 
-export const deleteMaintenanceRecord = async (id: string): Promise<void> => {
+export const deleteMaintenanceRecord = async (id: number): Promise<void> => {
   try {
     await deleteRecord(id);
   } catch (error) {

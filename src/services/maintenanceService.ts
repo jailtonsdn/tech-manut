@@ -5,15 +5,35 @@ import { MaintenanceRecord } from '@/types';
 // Quando estiver em desenvolvimento, continua usando o localStorage
 const isDev = process.env.NODE_ENV === 'development';
 
-// Adapta o serviço para funcionar com localStorage durante o desenvolvimento
-// e com a API em produção
+const mapRecordFromAPI = (record: any): MaintenanceRecord => ({
+  id: record.id,
+  nome_equipamento: record.nome_equipamento,
+  placa_patrimonio: record.placa_patrimonio,
+  filial: record.filial,
+  setor: record.setor,
+  destino: record.destino,
+  data_abertura: record.data_abertura,
+  data_entrega: record.data_entrega,
+  data_devolucao: record.data_devolucao,
+  status: record.status,
+  observacao: record.observacao,
+  imagem: record.imagem,
+  excluido: record.excluido
+});
+
 export const getMaintenanceRecords = async (): Promise<MaintenanceRecord[]> => {
-  if (isDev) {
-    const storedData = localStorage.getItem('maintenanceRecords');
-    return storedData ? JSON.parse(storedData) : [];
+  try {
+    if (isDev) {
+      const storedData = localStorage.getItem('maintenanceRecords');
+      return storedData ? JSON.parse(storedData) : [];
+    }
+    
+    const response = await fetchAPI<any[]>('/maintenance');
+    return response.map(mapRecordFromAPI);
+  } catch (error) {
+    console.error('Erro ao buscar registros:', error);
+    return [];
   }
-  
-  return await fetchAPI<MaintenanceRecord[]>('/maintenance');
 };
 
 export const addMaintenanceRecord = async (
@@ -22,7 +42,7 @@ export const addMaintenanceRecord = async (
   if (isDev) {
     const newRecord = {
       ...record,
-      id: Date.now().toString(),
+      id: Date.now()
     };
     
     const currentRecords = localStorage.getItem('maintenanceRecords');
@@ -33,7 +53,8 @@ export const addMaintenanceRecord = async (
     return newRecord;
   }
   
-  return await fetchAPI<MaintenanceRecord>('/maintenance', 'POST', record);
+  const response = await fetchAPI<any>('/maintenance', 'POST', record);
+  return mapRecordFromAPI(response);
 };
 
 export const updateMaintenanceRecord = async (
@@ -50,10 +71,11 @@ export const updateMaintenanceRecord = async (
     return updatedRecord;
   }
   
-  return await fetchAPI<MaintenanceRecord>(`/maintenance/${updatedRecord.id}`, 'PUT', updatedRecord);
+  const response = await fetchAPI<any>(`/maintenance/${updatedRecord.id}`, 'PUT', updatedRecord);
+  return mapRecordFromAPI(response);
 };
 
-export const deleteMaintenanceRecord = async (id: string): Promise<void> => {
+export const deleteMaintenanceRecord = async (id: number): Promise<void> => {
   if (isDev) {
     const currentRecords = localStorage.getItem('maintenanceRecords');
     const parsedRecords = currentRecords ? JSON.parse(currentRecords) : [];
