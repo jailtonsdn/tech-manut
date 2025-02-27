@@ -6,7 +6,7 @@ import { MaintenanceRecord, MaintenanceStatus } from '@/types';
 const isDev = process.env.NODE_ENV === 'development';
 
 // Funções de mapeamento entre os campos do MySQL e os campos do frontend
-function mapToFrontendFields(record: MaintenanceRecord): MaintenanceRecord {
+function mapToFrontendFields(record: any): MaintenanceRecord {
   // Mapear o status do banco para o formato de MaintenanceStatus
   let statusMapped: MaintenanceStatus = 'received';
   if (record.status === 'sent' || record.status === 'em_manutencao') {
@@ -17,15 +17,16 @@ function mapToFrontendFields(record: MaintenanceRecord): MaintenanceRecord {
 
   return {
     ...record,
+    id: record.id || 0,
     // Mapeia campos do banco para nomes amigáveis no frontend
-    equipmentName: record.nome_equipamento,
-    assetTag: record.placa_patrimonio,
-    branch: record.filial.toString(),
-    department: record.setor,
-    dateReceived: record.data_abertura,
-    dateSentToService: record.data_entrega,
-    dateReturned: record.data_devolucao,
-    notes: record.observacao,
+    equipmentName: record.nome_equipamento || '',
+    assetTag: record.placa_patrimonio || '',
+    branch: record.filial ? record.filial.toString() : '',
+    department: record.setor || '',
+    dateReceived: record.data_abertura || '',
+    dateSentToService: record.data_entrega || '',
+    dateReturned: record.data_devolucao || '',
+    notes: record.observacao || '',
     status: statusMapped, // Aqui garantimos que o status está no formato correto
     // Definir equipmentType com base em alguma lógica ou campo padrão
     equipmentType: 'computer', // Valor padrão, ajuste conforme necessário
@@ -36,14 +37,14 @@ function mapToBackendFields(record: Partial<MaintenanceRecord>): Partial<Mainten
   const backendRecord: Partial<MaintenanceRecord> = {
     ...record,
     // Mapeia de volta para os campos do banco de dados
-    nome_equipamento: record.equipmentName,
-    placa_patrimonio: record.assetTag,
-    filial: record.branch ? parseInt(record.branch) : undefined,
-    setor: record.department,
-    data_abertura: record.dateReceived,
-    data_entrega: record.dateSentToService,
-    data_devolucao: record.dateReturned,
-    observacao: record.notes,
+    nome_equipamento: record.equipmentName || '',
+    placa_patrimonio: record.assetTag || '',
+    filial: record.branch ? parseInt(record.branch) : 0,
+    setor: record.department || '',
+    data_abertura: record.dateReceived || '',
+    data_entrega: record.dateSentToService || '',
+    data_devolucao: record.dateReturned || '',
+    observacao: record.notes || '',
     // Status permanece o mesmo
     // Outros campos específicos do backend
     imagem: record.imagem || '', // Campo necessário
@@ -54,20 +55,33 @@ function mapToBackendFields(record: Partial<MaintenanceRecord>): Partial<Mainten
 }
 
 const mapRecordFromAPI = (record: any): MaintenanceRecord => {
+  if (!record) {
+    return {
+      id: 0,
+      equipmentName: '',
+      assetTag: '',
+      branch: '',
+      department: '',
+      status: 'received',
+      dateReceived: '',
+      equipmentType: 'computer'
+    };
+  }
+  
   const mappedRecord = {
-    id: record.id,
-    nome_equipamento: record.nome_equipamento,
-    placa_patrimonio: record.placa_patrimonio,
-    filial: record.filial,
-    setor: record.setor,
-    destino: record.destino,
-    data_abertura: record.data_abertura,
-    data_entrega: record.data_entrega,
-    data_devolucao: record.data_devolucao,
-    status: record.status,
-    observacao: record.observacao,
-    imagem: record.imagem,
-    excluido: record.excluido
+    id: record.id || 0,
+    nome_equipamento: record.nome_equipamento || '',
+    placa_patrimonio: record.placa_patrimonio || '',
+    filial: record.filial || 0,
+    setor: record.setor || '',
+    destino: record.destino || '',
+    data_abertura: record.data_abertura || '',
+    data_entrega: record.data_entrega || '',
+    data_devolucao: record.data_devolucao || '',
+    status: record.status || 'received',
+    observacao: record.observacao || '',
+    imagem: record.imagem || '',
+    excluido: record.excluido || 'N'
   };
   
   // Retorna o registro com os campos mapeados para o frontend
@@ -80,7 +94,7 @@ export const getMaintenanceRecords = async (): Promise<MaintenanceRecord[]> => {
       const storedData = localStorage.getItem('maintenanceRecords');
       const records = storedData ? JSON.parse(storedData) : [];
       // Mapeia os registros para o formato do frontend
-      return records.map(mapToFrontendFields);
+      return records.map((record: any) => mapToFrontendFields(record));
     }
     
     const response = await fetchAPI<any[]>('/maintenance');

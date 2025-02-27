@@ -246,7 +246,7 @@ const Dashboard = () => {
                     <SelectValue placeholder="Todas as filiais" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as filiais</SelectItem>
+                    <SelectItem value="all">Todas as filiais</SelectItem>
                     {branchOptions.map(branch => (
                       <SelectItem key={branch} value={branch}>{branch}</SelectItem>
                     ))}
@@ -261,7 +261,7 @@ const Dashboard = () => {
                     <SelectValue placeholder="Todos os setores" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todos os setores</SelectItem>
+                    <SelectItem value="all">Todos os setores</SelectItem>
                     {departmentOptions.map(dept => (
                       <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                     ))}
