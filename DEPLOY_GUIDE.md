@@ -1,9 +1,61 @@
+# Guia de Implantação no Hostgator e Publicação no GitHub
 
-# Guia de Implantação no Hostgator com MySQL
+Este documento oferece instruções para implantar o Sistema de Manutenção no Hostgator e publicá-lo no GitHub.
 
-Este documento oferece instruções para implantar o Sistema de Manutenção no Hostgator e configurá-lo para usar MySQL.
+## Parte 1: Publicando no GitHub
 
-## Requisitos
+### Pré-requisitos
+
+1. Uma conta no [GitHub](https://github.com/)
+2. Git instalado em seu computador
+3. Acesso aos arquivos do projeto
+
+### Passo a Passo para Publicação no GitHub
+
+1. **Criar um Repositório no GitHub**
+   - Acesse sua conta no GitHub
+   - Clique no botão "+" no canto superior direito e selecione "Novo repositório"
+   - Dê um nome ao seu repositório (ex: "sistema-manutencao")
+   - Escolha se o repositório será público ou privado
+   - Clique em "Criar repositório"
+
+2. **Preparar o Projeto para o GitHub**
+   - Abra um terminal ou prompt de comando
+   - Navegue até a pasta raiz do seu projeto
+   ```bash
+   cd caminho/para/seu/projeto
+   ```
+   - Inicialize um repositório Git local
+   ```bash
+   git init
+   ```
+   - Adicione todos os arquivos ao Git
+   ```bash
+   git add .
+   ```
+   - Crie o primeiro commit
+   ```bash
+   git commit -m "Commit inicial"
+   ```
+
+3. **Conectar e Enviar para o GitHub**
+   - Conecte seu repositório local ao repositório remoto no GitHub
+   ```bash
+   git remote add origin https://github.com/seu-usuario/sistema-manutencao.git
+   ```
+   - Envie os arquivos para o GitHub
+   ```bash
+   git push -u origin main
+   ```
+   - Se estiver usando a branch "master" em vez de "main", substitua no comando acima
+
+4. **Verificar a Publicação**
+   - Acesse https://github.com/seu-usuario/sistema-manutencao
+   - Confirme se todos os arquivos do projeto estão visíveis no repositório
+
+## Parte 2: Implantação no Hostgator
+
+### Requisitos
 
 1. Uma conta Hostgator com:
    - Hospedagem compartilhada ou VPS
@@ -11,17 +63,17 @@ Este documento oferece instruções para implantar o Sistema de Manutenção no 
    - Banco de dados MySQL
    - Acesso a cPanel
 
-## Etapas para Implantação
+### Etapas para Implantação
 
-### 1. Preparando o Banco de Dados
+#### 1. Preparando o Banco de Dados
 
 1. Acesse o cPanel do seu plano Hostgator
-2. Localize a seção "Databases" e clique em "MySQL Databases"
+2. Localize a seção "Bancos de Dados" e clique em "MySQL Databases"
 3. Crie um novo banco de dados e anote o nome
 4. Crie um novo usuário e senha para o banco de dados
 5. Adicione o usuário ao banco de dados com todas as permissões
 
-### 2. Criando a Estrutura do Banco de Dados
+#### 2. Criando a Estrutura do Banco de Dados
 
 Aqui está o SQL para criar as tabelas necessárias. Execute isto no phpMyAdmin:
 
@@ -37,315 +89,173 @@ CREATE TABLE `users` (
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `maintenance_records` (
-  `id` varchar(36) NOT NULL,
-  `equipment_name` varchar(100) NOT NULL,
-  `asset_tag` varchar(50) NOT NULL,
-  `date_received` date NOT NULL,
-  `date_sent_to_service` date DEFAULT NULL,
-  `date_returned` date DEFAULT NULL,
-  `status` enum('received','sent','completed') NOT NULL,
-  `invoice_number` varchar(50) DEFAULT NULL,
-  `value` decimal(10,2) DEFAULT NULL,
-  `notes` text,
-  `equipment_type` enum('ups','printer','computer') NOT NULL,
-  `branch` varchar(100) DEFAULT NULL,
-  `department` varchar(100) DEFAULT NULL,
-  `registered_by` varchar(36) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `registered_by` (`registered_by`),
-  CONSTRAINT `maintenance_records_ibfk_1` FOREIGN KEY (`registered_by`) REFERENCES `users` (`id`)
+CREATE TABLE `equipamentos` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome_equipamento` varchar(100) NOT NULL,
+  `placa_patrimonio` varchar(50) NOT NULL,
+  `filial` int(11) NOT NULL,
+  `setor` varchar(100) DEFAULT NULL,
+  `destino` varchar(100) DEFAULT NULL,
+  `data_abertura` date NOT NULL,
+  `data_entrega` date DEFAULT NULL,
+  `data_devolucao` date DEFAULT NULL,
+  `status` enum('received','sent','completed') NOT NULL DEFAULT 'received',
+  `observacao` text DEFAULT NULL,
+  `imagem` varchar(255) DEFAULT NULL,
+  `excluido` enum('S','N') NOT NULL DEFAULT 'N',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-### 3. Configurando o Backend (PHP)
+#### 3. Configurando e Fazendo Upload dos Arquivos
 
-1. Crie uma pasta `api` na raiz do seu domínio no Hostgator
-2. Faça upload dos seguintes arquivos:
+1. **Prepare o Backend:**
+   - Atualize o arquivo `config.php` com as configurações do seu banco de dados no Hostgator:
+   ```php
+   <?php
+   // Configurações do banco de dados
+   $hostname = "localhost"; // Geralmente é localhost no Hostgator
+   $username = "seu_usuario_do_banco"; // Nome de usuário do MySQL que você criou
+   $password = "sua_senha_do_banco"; // Senha que você definiu
+   $database = "seu_banco_de_dados"; // Nome do banco de dados que você criou
 
-#### config.php
-```php
-<?php
-// Configurações do Banco de Dados
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'seu_banco_de_dados');
-define('DB_USER', 'seu_usuario');
-define('DB_PASS', 'sua_senha');
+   // Configurações da aplicação
+   $app_name = "Sistema de Manutenção";
+   $app_version = "1.0.0";
 
-// Configurações da API
-define('JWT_SECRET', 'chave_secreta_para_tokens'); // Mude isso para uma string aleatória
-define('CORS_ORIGIN', '*'); // Em produção, defina para seu domínio específico
+   // Configurações de ambiente
+   $debug_mode = false;
 
-// Configurar timezone
-date_default_timezone_set('America/Sao_Paulo');
+   // Configurar timezone
+   date_default_timezone_set('America/Sao_Paulo');
 
-// Configurar headers para CORS
-header('Access-Control-Allow-Origin: ' . CORS_ORIGIN);
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Content-Type: application/json');
+   // Função para formatar valores em reais
+   function formataMoeda($valor) {
+       return 'R$ ' . number_format($valor, 2, ',', '.');
+   }
 
-// Tratar requisições OPTIONS (preflight)
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+   // Função para formatar datas
+   function formataData($data) {
+       if (empty($data)) return '-';
+       return date('d/m/Y', strtotime($data));
+   }
 
-// Função para conectar ao banco de dados
-function getConnection() {
-    try {
-        $conn = new PDO(
-            'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4',
-            DB_USER,
-            DB_PASS,
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-        );
-        return $conn;
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Erro de conexão com o banco de dados']);
-        exit;
-    }
-}
-?>
+   // Função para obter status formatado
+   function formataStatus($status) {
+       switch ($status) {
+           case 'received':
+               return ['texto' => 'Lançado', 'classe' => 'status-received'];
+           case 'sent':
+               return ['texto' => 'Em Manutenção', 'classe' => 'status-sent'];
+           case 'completed':
+               return ['texto' => 'Concluído', 'classe' => 'status-completed'];
+           default:
+               return ['texto' => $status, 'classe' => ''];
+       }
+   }
+
+   // Funções de segurança
+   function limpaTexto($texto) {
+       return htmlspecialchars(trim($texto), ENT_QUOTES, 'UTF-8');
+   }
+   ?>
+   ```
+
+2. **Prepare o Frontend (React):**
+   - Atualize o arquivo `src/config/api.ts` para apontar para a URL do seu domínio:
+   ```typescript
+   const API_CONFIG = {
+     BASE_URL: process.env.NODE_ENV === 'production' 
+       ? 'https://seudominio.com.br/backend' // Substitua pelo seu domínio real
+       : 'http://localhost:3000/api',
+     TIMEOUT: 15000, // 15 segundos
+   };
+   
+   export default API_CONFIG;
+   ```
+
+3. **Construa o Frontend:**
+   - No seu ambiente de desenvolvimento, execute:
+   ```bash
+   npm run build
+   ```
+   - Isso irá gerar os arquivos de produção na pasta `dist`
+
+4. **Faça Upload dos Arquivos:**
+   - Acesse o Gerenciador de Arquivos do cPanel do seu domínio no Hostgator
+   - Crie uma pasta chamada `backend` na raiz do seu domínio
+   - Faça upload dos arquivos PHP (`config.php`, `backend/maintenance.php`, etc.) para a pasta `backend`
+   - Faça upload de todos os arquivos da pasta `dist` para a pasta raiz do seu domínio (geralmente `public_html`)
+
+5. **Configure o .htaccess:**
+   - Crie um arquivo `.htaccess` na raiz do seu domínio com o seguinte conteúdo:
+   ```
+   <IfModule mod_rewrite.c>
+     RewriteEngine On
+     RewriteBase /
+     RewriteRule ^index\.html$ - [L]
+     RewriteCond %{REQUEST_FILENAME} !-f
+     RewriteCond %{REQUEST_FILENAME} !-d
+     RewriteCond %{REQUEST_FILENAME} !-l
+     RewriteRule . /index.html [L]
+   </IfModule>
+   ```
+
+#### 4. Testando a Implantação
+
+1. Acesse seu site através do navegador: `https://seudominio.com.br`
+2. Verifique se o frontend está carregando corretamente
+3. Teste a comunicação com o backend tentando carregar e salvar registros de manutenção
+4. Verifique no console do navegador (F12) se há erros de conexão com a API
+
+#### 5. Solução de Problemas Comuns
+
+1. **Erro 404 no Frontend:**
+   - Verifique se o arquivo `.htaccess` está configurado corretamente
+   - Certifique-se de que os arquivos do frontend foram enviados para o diretório raiz
+
+2. **Erro de Conexão com a API:**
+   - Verifique se o caminho na configuração `API_CONFIG.BASE_URL` está correto
+   - Confirme se os arquivos PHP foram enviados para a pasta correta
+
+3. **Erro de Conexão com o Banco de Dados:**
+   - Verifique as credenciais no arquivo `config.php`
+   - Certifique-se de que o usuário tem permissões para acessar o banco de dados
+
+4. **Erro 500 no Backend:**
+   - Verifique os logs de erro do PHP no cPanel
+   - Adicione um tratamento de erros mais detalhado nos scripts PHP
+
+## Parte 3: Manutenção e Atualizações
+
+### Atualizando o Sistema no GitHub
+
+Após fazer alterações no sistema:
+
+```bash
+git add .
+git commit -m "Descrição das alterações"
+git push
 ```
 
-#### api/index.php
-```php
-<?php
-require_once '../config.php';
+### Atualizando o Sistema no Hostgator
 
-// Obter caminho da URL
-$request_uri = $_SERVER['REQUEST_URI'];
-$path = parse_url($request_uri, PHP_URL_PATH);
-$path = str_replace('/api/', '', $path);
-$segments = explode('/', $path);
-$resource = $segments[0] ?? '';
-$id = $segments[1] ?? null;
-$method = $_SERVER['REQUEST_METHOD'];
+Após atualizar o repositório no GitHub:
 
-// Obter dados do corpo da requisição
-$data = json_decode(file_get_contents('php://input'), true) ?? [];
+1. Se houver alterações no frontend:
+   - Execute `npm run build` localmente
+   - Faça upload dos novos arquivos da pasta `dist` para o Hostgator
 
-// Roteamento básico
-switch ($resource) {
-    case 'auth':
-        include 'auth.php';
-        break;
-    case 'maintenance':
-        include 'maintenance.php';
-        break;
-    default:
-        http_response_code(404);
-        echo json_encode(['error' => 'Recurso não encontrado']);
-        break;
-}
-?>
-```
+2. Se houver alterações no backend:
+   - Faça upload dos arquivos PHP atualizados para a pasta `backend` no Hostgator
 
-#### api/auth.php
-```php
-<?php
-// Implementar autenticação
-// ...código de autenticação...
-?>
-```
-
-#### api/maintenance.php
-```php
-<?php
-require_once '../config.php';
-
-$conn = getConnection();
-
-switch ($method) {
-    case 'GET':
-        if ($id) {
-            // Obter um registro específico
-            $stmt = $conn->prepare("SELECT * FROM maintenance_records WHERE id = ?");
-            $stmt->execute([$id]);
-            $record = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($record) {
-                echo json_encode($record);
-            } else {
-                http_response_code(404);
-                echo json_encode(['error' => 'Registro não encontrado']);
-            }
-        } else {
-            // Obter todos os registros
-            $stmt = $conn->query("SELECT * FROM maintenance_records ORDER BY created_at DESC");
-            $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode($records);
-        }
-        break;
-        
-    case 'POST':
-        // Criar um novo registro
-        $stmt = $conn->prepare("
-            INSERT INTO maintenance_records (
-                id, equipment_name, asset_tag, date_received, 
-                status, equipment_type, branch, department,
-                registered_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
-        
-        $id = uniqid();
-        $registered_by = "user_id"; // Substituir pelo ID real do usuário autenticado
-        
-        $stmt->execute([
-            $id,
-            $data['equipmentName'],
-            $data['assetTag'],
-            $data['dateReceived'],
-            $data['status'],
-            $data['equipmentType'],
-            $data['branch'] ?? null,
-            $data['department'] ?? null,
-            $registered_by
-        ]);
-        
-        $data['id'] = $id;
-        echo json_encode($data);
-        break;
-        
-    case 'PUT':
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(['error' => 'ID não fornecido']);
-            break;
-        }
-        
-        // Atualizar um registro
-        $fields = [];
-        $values = [];
-        
-        // Mapear campos do frontend para o banco de dados
-        $mapping = [
-            'equipmentName' => 'equipment_name',
-            'assetTag' => 'asset_tag',
-            'dateReceived' => 'date_received',
-            'dateSentToService' => 'date_sent_to_service',
-            'dateReturned' => 'date_returned',
-            'status' => 'status',
-            'invoiceNumber' => 'invoice_number',
-            'value' => 'value',
-            'notes' => 'notes',
-            'equipmentType' => 'equipment_type',
-            'branch' => 'branch',
-            'department' => 'department'
-        ];
-        
-        foreach ($mapping as $frontendKey => $dbKey) {
-            if (isset($data[$frontendKey])) {
-                $fields[] = "$dbKey = ?";
-                $values[] = $data[$frontendKey];
-            }
-        }
-        
-        if (empty($fields)) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Nenhum campo para atualizar']);
-            break;
-        }
-        
-        $values[] = $id; // Para a cláusula WHERE
-        
-        $stmt = $conn->prepare("
-            UPDATE maintenance_records 
-            SET " . implode(', ', $fields) . "
-            WHERE id = ?
-        ");
-        
-        $stmt->execute($values);
-        
-        if ($stmt->rowCount() > 0) {
-            // Obter o registro atualizado
-            $stmt = $conn->prepare("SELECT * FROM maintenance_records WHERE id = ?");
-            $stmt->execute([$id]);
-            $record = $stmt->fetch(PDO::FETCH_ASSOC);
-            echo json_encode($record);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Registro não encontrado ou nenhuma alteração feita']);
-        }
-        break;
-        
-    case 'DELETE':
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(['error' => 'ID não fornecido']);
-            break;
-        }
-        
-        // Excluir um registro
-        $stmt = $conn->prepare("DELETE FROM maintenance_records WHERE id = ?");
-        $stmt->execute([$id]);
-        
-        if ($stmt->rowCount() > 0) {
-            echo json_encode(['success' => true]);
-        } else {
-            http_response_code(404);
-            echo json_encode(['error' => 'Registro não encontrado']);
-        }
-        break;
-        
-    default:
-        http_response_code(405);
-        echo json_encode(['error' => 'Método não permitido']);
-        break;
-}
-?>
-```
-
-### 4. Implantando o Frontend React
-
-Para implantar o frontend React no Hostgator:
-
-1. Execute `npm run build` no seu computador local para gerar os arquivos de produção
-2. Faça upload de todo o conteúdo da pasta `build` para a pasta pública do seu domínio no Hostgator (geralmente `public_html`)
-3. Crie um arquivo `.htaccess` na raiz do seu domínio com o seguinte conteúdo:
-
-```
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_FILENAME} !-l
-  RewriteRule . /index.html [L]
-</IfModule>
-```
-
-### 5. Configurando o Frontend para Apontar para a API
-
-Atualize o arquivo `src/config/api.ts` para apontar para a URL correta da sua API no Hostgator:
-
-```typescript
-// Configuração para conexão com a API backend
-const API_CONFIG = {
-  BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://seudominio.com.br/api' // Substitua pelo seu domínio real
-    : 'http://localhost:3000/api',
-  TIMEOUT: 15000, // 15 segundos
-};
-
-export default API_CONFIG;
-```
+3. Se houver alterações no banco de dados:
+   - Execute os scripts SQL necessários através do phpMyAdmin no cPanel
 
 ## Considerações de Segurança
 
-1. Sempre utilize HTTPS para proteger as comunicações
-2. Implemente autenticação JWT para proteger o acesso à API
-3. Use prepared statements (como mostrado) para evitar injeção de SQL
-4. Filtre e valide todos os dados de entrada
-5. Não armazene senhas em texto plano, use bcrypt ou similar
-
-## Solução de Problemas
-
-- Se encontrar erros 500, verifique os logs de erro do PHP no cPanel
-- Para erros de CORS, verifique as configurações de cabeçalho no arquivo config.php
-- Para problemas de permissão, assegure-se de que as permissões de arquivo estejam corretas (geralmente 644 para arquivos e 755 para diretórios)
+1. Não armazene senhas ou chaves de API diretamente no código
+2. Utilize HTTPS para proteger a comunicação entre o frontend e o backend
+3. Implemente validação adequada de dados de entrada no backend
+4. Considere adicionar autenticação JWT para proteger suas APIs
+5. Faça backup regular do banco de dados
